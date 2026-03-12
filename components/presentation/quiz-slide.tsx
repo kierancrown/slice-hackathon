@@ -14,6 +14,7 @@ type QuizSlideProps = {
   revealed: boolean;
   liveQuestion: RealtimeQuestionState | null;
   participantCount: number;
+  votedParticipantNames: string[];
   sessionCode: string | null;
   liveConnected: boolean;
   onLiveReveal?: () => void;
@@ -31,6 +32,7 @@ export function QuizSlide({
   revealed,
   liveQuestion,
   participantCount,
+  votedParticipantNames,
   sessionCode,
   liveConnected,
   onLiveReveal,
@@ -50,9 +52,45 @@ export function QuizSlide({
   const participationCardClass = isDark
     ? "border-[#d6ff35]/18 bg-white/6 text-[#d6ff35]"
     : "border-black/18 bg-white/35 text-black";
+  const correctLiveVotes = liveQuestion?.totals[slide.answerId] ?? 0;
+  const correctLivePercent = liveQuestion?.totalVotes
+    ? Math.round((correctLiveVotes / liveQuestion.totalVotes) * 100)
+    : 0;
+  const revealBannerVisible = liveQuestion?.status === "revealed";
 
   return (
-    <div className="grid h-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="relative grid h-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+      <motion.div
+        initial={false}
+        animate={{
+          opacity: revealBannerVisible ? 1 : 0,
+          y: revealBannerVisible ? 0 : -18,
+          scale: revealBannerVisible ? 1 : 0.96,
+          pointerEvents: revealBannerVisible ? "auto" : "none",
+        }}
+        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+        className={`absolute left-1/2 top-0 z-30 w-full max-w-2xl -translate-x-1/2 rounded-[1.8rem] border-2 px-6 py-5 shadow-[12px_12px_0_rgba(0,0,0,0.16)] ${
+          isDark ? "border-[#d6ff35] bg-[#d6ff35] text-black" : "border-black bg-black text-[#d6ff35]"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-70">
+              Reveal stats
+            </p>
+            <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.05em] md:text-5xl">
+              {correctLivePercent}% got it right
+            </p>
+            <p className="mt-3 text-sm uppercase tracking-[0.18em] opacity-75">
+              {correctLiveVotes} of {liveQuestion?.totalVotes ?? 0} voters picked the right answer
+            </p>
+          </div>
+          <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
+            <p>{liveQuestion?.totalVotes ?? 0} votes</p>
+            <p>Answer {slide.answerId.toUpperCase()}</p>
+          </div>
+        </div>
+      </motion.div>
       <div className="flex flex-col justify-between gap-8">
         <div className="space-y-6">
           <div className={`flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] ${mutedTextClass}`}>
@@ -109,6 +147,27 @@ export function QuizSlide({
                   <span>{liveQuestion.totalVotes} votes</span>
                   <span>{liveQuestion.status}</span>
                 </div>
+                {votedParticipantNames.length ? (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-58">
+                      Voted so far
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {votedParticipantNames.map((name) => (
+                        <span
+                          key={name}
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
+                            isDark
+                              ? "border-[#d6ff35]/18 bg-black/20 text-[#d6ff35]"
+                              : "border-black/14 bg-white/55 text-black"
+                          }`}
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 <p className="text-sm leading-relaxed opacity-78">
                   Votes update directly in the answer cards on the right. Reveal or reset the live question from here.
                 </p>

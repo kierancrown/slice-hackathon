@@ -32,52 +32,52 @@ function getSlideOverview(slide: Slide) {
     case "hero":
       return {
         intro: slide.subtitle,
-        items: [slide.supportingLine, slide.meta],
+        detail: slide.supportingLine,
       };
     case "statement":
       return {
         intro: slide.body,
-        items: [...(slide.bullets ?? []), ...(slide.callout ? [slide.callout] : [])],
+        detail: slide.callout ?? slide.bullets?.[0] ?? "",
       };
     case "list":
       return {
         intro: slide.intro,
-        items: slide.items.map((item) => `${item.title}: ${item.description}`),
+        detail: slide.items[0]?.title ?? "",
       };
     case "workflow":
       return {
         intro: slide.intro,
-        items: slide.steps.map((step) => `${step.name}: ${step.description}`),
+        detail: slide.steps.map((step) => step.name).join(" / "),
       };
     case "function-grid":
       return {
         intro: slide.intro,
-        items: slide.items.map((item) => `${item.functionName}: ${item.examples.join(", ")}`),
+        detail: slide.items.map((item) => item.functionName).slice(0, 4).join(" / "),
       };
     case "timeline":
       return {
         intro: slide.intro,
-        items: slide.days.map((day) => `${day.label}: ${day.items.join(", ")}`),
+        detail: slide.days.map((day) => day.label).join(" / "),
       };
     case "prompts":
       return {
         intro: slide.intro,
-        items: slide.prompts,
+        detail: slide.prompts[0] ?? "",
       };
     case "closing":
       return {
         intro: slide.kicker,
-        items: slide.lines,
+        detail: slide.lines[0] ?? "",
       };
     case "quiz":
       return {
         intro: slide.prompt,
-        items: slide.options.map((option) => option.text),
+        detail: "",
       };
     default:
       return {
         intro: "",
-        items: [],
+        detail: "",
       };
   }
 }
@@ -101,13 +101,12 @@ function FollowAlongCard({ slide }: { slide: Slide }) {
       {overview.intro ? (
         <p className="mt-4 text-base leading-relaxed text-[#d6ff35]/82">{overview.intro}</p>
       ) : null}
-      {overview.items.length ? (
-        <div className="mt-5 space-y-3">
-          {overview.items.slice(0, 5).map((item) => (
-            <div key={item} className="rounded-[1rem] border border-[#d6ff35]/14 bg-white/6 px-4 py-4">
-              <p className="text-sm leading-relaxed text-[#d6ff35]/84">{item}</p>
-            </div>
-          ))}
+      {overview.detail ? (
+        <div className="mt-5 rounded-[1rem] border border-[#d6ff35]/14 bg-white/6 px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/58">
+            Overview
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#d6ff35]/84">{overview.detail}</p>
         </div>
       ) : null}
       {slide.speakerNotes ? (
@@ -223,11 +222,13 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
   const [sessionState, setSessionState] = useState<RealtimeSessionState | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reconnectNonce, setReconnectNonce] = useState(0);
 
   const socketRef = useRef<WebSocket | null>(null);
   const confettiRef = useRef<ConfettiRef>(null);
   const previousSelectedIdRef = useRef<string | null>(null);
   const previousRevealStateRef = useRef<string>("");
+  const reconnectTimerRef = useRef<number | null>(null);
   const normalizedCode = useMemo(() => code.toUpperCase(), [code]);
   const { trigger } = useWebHaptics();
 
@@ -241,11 +242,25 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
       return;
     }
 
+    const scheduleReconnect = () => {
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+      }
+
+      reconnectTimerRef.current = window.setTimeout(() => {
+        setReconnectNonce((current) => current + 1);
+      }, 1200);
+    };
+
     socketRef.current = socket;
 
     socket.addEventListener("open", () => {
       setConnected(true);
       setError(null);
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       socket.send(
         JSON.stringify({
           type: "register",
@@ -271,17 +286,50 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
 
     socket.addEventListener("close", () => {
       setConnected(false);
+      scheduleReconnect();
     });
 
     socket.addEventListener("error", () => {
       setError("Unable to connect to the live session.");
+      scheduleReconnect();
     });
 
     return () => {
       socketRef.current = null;
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       socket.close();
     };
-  }, [normalizedCode, participantId, name]);
+  }, [normalizedCode, participantId, name, reconnectNonce]);
+
+  useEffect(() => {
+    const refreshConnection = () => {
+      const socket = socketRef.current;
+      if (!socket || socket.readyState === WebSocket.CLOSED) {
+        setReconnectNonce((current) => current + 1);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshConnection();
+      }
+    };
+
+    window.addEventListener("focus", refreshConnection);
+    window.addEventListener("online", refreshConnection);
+    window.addEventListener("pageshow", refreshConnection);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", refreshConnection);
+      window.removeEventListener("online", refreshConnection);
+      window.removeEventListener("pageshow", refreshConnection);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const submitName = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

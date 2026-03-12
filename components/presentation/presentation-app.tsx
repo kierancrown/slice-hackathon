@@ -112,6 +112,16 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
   const audienceParticipantCount =
     liveState?.participants.filter((participant) => participant.id !== presenterId).length ?? 0;
   const currentLiveQuestion = liveState?.questions[currentSlide.id] ?? null;
+  const votedParticipantNames =
+    currentLiveQuestion && liveState
+      ? liveState.participants
+          .filter(
+            (participant) =>
+              participant.id !== presenterId &&
+              Boolean(currentLiveQuestion.votes[participant.id]),
+          )
+          .map((participant) => participant.name)
+      : [];
   const liveJoinUrl = liveSessionCode ? buildJoinUrl(liveSessionCode) : "";
 
   useEffect(() => {
@@ -481,6 +491,13 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
     } else if (event.key.toLowerCase() === "q") {
       event.preventDefault();
       setShowLivePanel((current) => !current);
+    } else if (event.key.toLowerCase() === "v") {
+      event.preventDefault();
+      if (liveSessionCode && currentSlide.kind === "quiz") {
+        revealLiveQuestion();
+      } else if (currentSlide.kind === "quiz") {
+        handleQuizReveal(currentSlide.id);
+      }
     } else if (event.key.toLowerCase() === "r") {
       event.preventDefault();
       resetQuiz();
@@ -586,6 +603,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
                   quizState={quizProgress[currentSlide.id]}
                   liveQuestion={currentLiveQuestion}
                   participantCount={audienceParticipantCount}
+                  votedParticipantNames={votedParticipantNames}
                   sessionCode={liveSessionCode}
                   liveConnected={liveConnected}
                   onLiveReveal={revealLiveQuestion}
@@ -630,6 +648,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <span>O: overview</span>
               <span>J or /: jump</span>
               <span>Q: live QR</span>
+              <span>V: reveal answer</span>
               <span>M: toggle menu</span>
               <span>P: toggle menu</span>
               <span>H: hide hints</span>

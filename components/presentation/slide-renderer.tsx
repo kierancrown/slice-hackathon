@@ -12,6 +12,7 @@ type SlideRendererProps = {
   quizState: QuizProgress[string] | undefined;
   liveQuestion?: import("@/lib/realtime/protocol").RealtimeQuestionState | null;
   participantCount?: number;
+  votedParticipantNames?: string[];
   sessionCode?: string | null;
   liveConnected?: boolean;
   onLiveReveal?: () => void;
@@ -68,6 +69,7 @@ export function SlideRenderer({
   quizState,
   liveQuestion,
   participantCount = 0,
+  votedParticipantNames = [],
   sessionCode = null,
   liveConnected = false,
   onLiveReveal,
@@ -88,6 +90,7 @@ export function SlideRenderer({
         revealed={quizState?.revealed ?? false}
         liveQuestion={liveQuestion ?? null}
         participantCount={participantCount}
+        votedParticipantNames={votedParticipantNames}
         sessionCode={sessionCode}
         liveConnected={liveConnected}
         onLiveReveal={onLiveReveal}
