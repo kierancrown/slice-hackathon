@@ -12,7 +12,11 @@
     "partykit:tail": "partykit tail"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.4",
+    "canvas-confetti": "^1.9.4",
+    "class-variance-authority": "^0.7.1",
     "framer-motion": "^12.23.24",
+    "ios-haptics": "^0.1.4",
     "next": "16.1.6",
     "qrcode": "^1.5.4",
     "react": "19.2.3",
@@ -20,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

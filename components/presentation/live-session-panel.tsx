@@ -8,6 +8,7 @@ import type { QuizSlide, Slide } from "@/components/presentation/types";
 import type { RealtimeQuestionState, RealtimeSessionState } from "@/lib/realtime/protocol";
 
 type LiveSessionPanelProps = {
+  visible: boolean;
   currentSlide: Slide;
   sessionCode: string | null;
   joinUrl: string;
@@ -65,6 +66,7 @@ function QuizResults({
 }
 
 export function LiveSessionPanel({
+  visible,
   currentSlide,
   sessionCode,
   joinUrl,
@@ -113,7 +115,11 @@ export function LiveSessionPanel({
   const currentQuiz = currentSlide.kind === "quiz" ? currentSlide : null;
 
   return (
-    <aside className="absolute left-6 top-24 z-30 hidden w-[25rem] border border-current/20 bg-black/92 p-4 text-[#d6ff35] xl:block">
+    <aside
+      className={`absolute left-6 top-24 z-30 hidden w-[25rem] border border-current/20 bg-black/92 p-4 text-[#d6ff35] xl:block ${
+        visible ? "" : "pointer-events-none opacity-0"
+      } transition-opacity duration-200`}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <div className="rounded-[1rem] bg-[#d6ff35] p-3">

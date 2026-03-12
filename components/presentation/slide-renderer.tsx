@@ -10,6 +10,12 @@ type SlideRendererProps = {
   index: number;
   total: number;
   quizState: QuizProgress[string] | undefined;
+  liveQuestion?: import("@/lib/realtime/protocol").RealtimeQuestionState | null;
+  participantCount?: number;
+  sessionCode?: string | null;
+  liveConnected?: boolean;
+  onLiveReveal?: () => void;
+  onLiveReset?: () => void;
   onQuizSelect: (slideId: string, optionId: string) => void;
   onQuizReveal: (slideId: string) => void;
 };
@@ -60,6 +66,12 @@ export function SlideRenderer({
   index,
   total,
   quizState,
+  liveQuestion,
+  participantCount = 0,
+  sessionCode = null,
+  liveConnected = false,
+  onLiveReveal,
+  onLiveReset,
   onQuizSelect,
   onQuizReveal,
 }: SlideRendererProps) {
@@ -74,6 +86,12 @@ export function SlideRenderer({
         isDark={isDark}
         selectedId={quizState?.selectedId ?? null}
         revealed={quizState?.revealed ?? false}
+        liveQuestion={liveQuestion ?? null}
+        participantCount={participantCount}
+        sessionCode={sessionCode}
+        liveConnected={liveConnected}
+        onLiveReveal={onLiveReveal}
+        onLiveReset={onLiveReset}
         onSelect={(optionId) => onQuizSelect(slide.id, optionId)}
         onReveal={() => onQuizReveal(slide.id)}
       />

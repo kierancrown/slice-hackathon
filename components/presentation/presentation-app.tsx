@@ -84,6 +84,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
   const [presentationMode, setPresentationMode] = useState(false);
   const [overviewMode, setOverviewMode] = useState(false);
   const [showHints, setShowHints] = useState(true);
+  const [showLivePanel, setShowLivePanel] = useState(false);
   const [showJumpPalette, setShowJumpPalette] = useState(false);
   const [jumpValue, setJumpValue] = useState("");
   const [quizProgress, setQuizProgress] = useState<QuizProgress>({});
@@ -471,6 +472,9 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
     } else if (event.key.toLowerCase() === "j" || event.key === "/") {
       event.preventDefault();
       setShowJumpPalette(true);
+    } else if (event.key.toLowerCase() === "q") {
+      event.preventDefault();
+      setShowLivePanel((current) => !current);
     } else if (event.key.toLowerCase() === "r") {
       event.preventDefault();
       resetQuiz();
@@ -537,6 +541,13 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               >
                 Jump
               </button>
+              <button
+                type="button"
+                onClick={() => setShowLivePanel((current) => !current)}
+                className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+              >
+                Live QR
+              </button>
             </div>
           </header>
         ) : null}
@@ -567,6 +578,12 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
                   index={currentIndex}
                   total={slides.length}
                   quizState={quizProgress[currentSlide.id]}
+                  liveQuestion={currentLiveQuestion}
+                  participantCount={liveState?.participants.length ?? 0}
+                  sessionCode={liveSessionCode}
+                  liveConnected={liveConnected}
+                  onLiveReveal={revealLiveQuestion}
+                  onLiveReset={resetLiveQuestion}
                   onQuizSelect={handleQuizSelect}
                   onQuizReveal={handleQuizReveal}
                 />
@@ -613,6 +630,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <span>Arrows / space: navigate</span>
               <span>O: overview</span>
               <span>J or /: jump</span>
+              <span>Q: live QR</span>
               <span>P: clean mode</span>
               <span>H: hide hints</span>
               <span>R: reset quiz</span>
@@ -737,6 +755,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
       ) : null}
 
       <LiveSessionPanel
+        visible={showLivePanel}
         currentSlide={currentSlide}
         sessionCode={liveSessionCode}
         joinUrl={liveJoinUrl}

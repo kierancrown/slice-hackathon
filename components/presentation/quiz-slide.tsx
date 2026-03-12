@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 
 import type { QuizSlide as QuizSlideType } from "@/components/presentation/types";
+import type { RealtimeQuestionState } from "@/lib/realtime/protocol";
 
 type QuizSlideProps = {
   slide: QuizSlideType;
@@ -11,6 +12,12 @@ type QuizSlideProps = {
   isDark: boolean;
   selectedId: string | null;
   revealed: boolean;
+  liveQuestion: RealtimeQuestionState | null;
+  participantCount: number;
+  sessionCode: string | null;
+  liveConnected: boolean;
+  onLiveReveal?: () => void;
+  onLiveReset?: () => void;
   onSelect: (optionId: string) => void;
   onReveal: () => void;
 };
@@ -22,6 +29,12 @@ export function QuizSlide({
   isDark,
   selectedId,
   revealed,
+  liveQuestion,
+  participantCount,
+  sessionCode,
+  liveConnected,
+  onLiveReveal,
+  onLiveReset,
   onSelect,
   onReveal,
 }: QuizSlideProps) {
@@ -34,6 +47,10 @@ export function QuizSlide({
   const revealDisabledClass = isDark
     ? "disabled:border-[#d6ff35]/20 disabled:bg-[#d6ff35]/10 disabled:text-[#d6ff35]/35"
     : "disabled:border-black/20 disabled:bg-black/20 disabled:text-black/35";
+  const participationCardClass = isDark
+    ? "border-[#d6ff35]/18 bg-white/6 text-[#d6ff35]"
+    : "border-black/18 bg-white/35 text-black";
+  const participationBarClass = isDark ? "bg-[#d6ff35]" : "bg-black";
 
   return (
     <div className="grid h-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -69,6 +86,101 @@ export function QuizSlide({
             Select first, then reveal.
           </p>
         </div>
+
+        {sessionCode ? (
+          <div className={`rounded-[1.8rem] border px-5 py-5 ${participationCardClass}`}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-60">
+                  Live participation
+                </p>
+                <p className="mt-2 font-display text-3xl uppercase leading-none tracking-[-0.05em]">
+                  {participantCount} joined
+                </p>
+              </div>
+              <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
+                <p>{liveConnected ? "Connected" : "Connecting"}</p>
+                <p>{sessionCode}</p>
+              </div>
+            </div>
+
+            {liveQuestion ? (
+              <div className="mt-5 space-y-3">
+                <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.2em] opacity-65">
+                  <span>{liveQuestion.totalVotes} votes</span>
+                  <span>{liveQuestion.status}</span>
+                </div>
+                <div className="space-y-3">
+                  {slide.options.map((option) => {
+                    const votes = liveQuestion.totals[option.id] ?? 0;
+                    const percent = liveQuestion.totalVotes
+                      ? Math.round((votes / liveQuestion.totalVotes) * 100)
+                      : 0;
+                    const isCorrect = option.id === slide.answerId;
+
+                    return (
+                      <div
+                        key={option.id}
+                        className={`rounded-[1.2rem] border px-4 py-4 ${
+                          isDark
+                            ? isCorrect
+                              ? "border-[#d6ff35] bg-[#d6ff35] text-black"
+                              : "border-[#d6ff35]/14 bg-black/18 text-[#d6ff35]"
+                            : isCorrect
+                              ? "border-black bg-black text-[#d6ff35]"
+                              : "border-black/14 bg-white/55 text-black"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="text-sm leading-snug">{option.text}</p>
+                          <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-75">
+                            <p>{votes}</p>
+                            <p>{percent}%</p>
+                          </div>
+                        </div>
+                        <div className={`mt-3 h-2 overflow-hidden rounded-full ${isDark ? "bg-white/10" : "bg-black/10"}`}>
+                          <div
+                            className={`h-full rounded-full ${participationBarClass}`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={onLiveReveal}
+                    className={`rounded-full border-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] ${
+                      isDark
+                        ? "border-[#d6ff35] bg-[#d6ff35] text-black"
+                        : "border-black bg-black text-[#d6ff35]"
+                    }`}
+                  >
+                    Reveal live
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onLiveReset}
+                    className={`rounded-full border-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] ${
+                      isDark
+                        ? "border-[#d6ff35]/20 text-[#d6ff35]"
+                        : "border-black/20 text-black"
+                    }`}
+                  >
+                    Reset live
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm leading-relaxed opacity-78">
+                Start a live session and move onto this slide to capture votes in realtime.
+              </p>
+            )}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex h-full flex-col justify-between gap-6">

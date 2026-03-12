@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { haptic } from "ios-haptics";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { QuizSlide } from "@/components/presentation/types";
+import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { getSlideById, isQuizSlide } from "@/lib/presentation";
 import {
   createPartySocket,
@@ -128,6 +130,9 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
   const [error, setError] = useState<string | null>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
+  const confettiRef = useRef<ConfettiRef>(null);
+  const previousSelectedIdRef = useRef<string | null>(null);
+  const previousRevealStateRef = useRef<string>("");
   const normalizedCode = useMemo(() => code.toUpperCase(), [code]);
 
   useEffect(() => {
@@ -211,6 +216,50 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
     currentQuiz && sessionState ? sessionState.questions[currentQuiz.id] ?? null : null;
   const selectedId =
     currentQuestion && participantId ? currentQuestion.votes[participantId] ?? null : null;
+  const revealKey = currentQuestion
+    ? `${currentQuestion.slideId}:${currentQuestion.status}:${selectedId ?? ""}`
+    : "";
+
+  useEffect(() => {
+    if (!selectedId || selectedId === previousSelectedIdRef.current) {
+      return;
+    }
+
+    previousSelectedIdRef.current = selectedId;
+    haptic();
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!currentQuiz || !currentQuestion) {
+      previousRevealStateRef.current = "";
+      return;
+    }
+
+    if (revealKey === previousRevealStateRef.current) {
+      return;
+    }
+
+    const wasRevealed = previousRevealStateRef.current.includes(":revealed:");
+    previousRevealStateRef.current = revealKey;
+
+    if (currentQuestion.status !== "revealed" || wasRevealed) {
+      return;
+    }
+
+    const isCorrect = selectedId === currentQuiz.answerId;
+    if (isCorrect) {
+      haptic.confirm();
+      confettiRef.current?.fire({
+        particleCount: 120,
+        spread: 80,
+        startVelocity: 40,
+        origin: { x: 0.5, y: 0.55 },
+        colors: ["#d6ff35", "#111111", "#c8f12e"],
+      });
+    } else {
+      haptic.error();
+    }
+  }, [currentQuestion, currentQuiz, revealKey, selectedId]);
 
   const submitVote = (optionId: string) => {
     if (!currentQuiz || !participantId) {
@@ -230,7 +279,12 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
   return (
     <main className="min-h-screen bg-[#d6ff35] px-5 py-6 text-black md:px-8">
       <div className="mx-auto max-w-xl">
-        <div className="rounded-[2rem] border-2 border-black bg-[#d6ff35] p-5 shadow-[10px_10px_0_rgba(0,0,0,0.12)]">
+        <div className="relative overflow-hidden rounded-[2rem] border-2 border-black bg-[#d6ff35] p-5 shadow-[10px_10px_0_rgba(0,0,0,0.12)]">
+          <Confetti
+            ref={confettiRef}
+            manualstart
+            className="pointer-events-none absolute inset-0 z-10 h-full w-full"
+          />
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="rounded-[1rem] bg-black px-3 py-3">
@@ -257,53 +311,55 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
             </div>
           </div>
 
-          {!name ? (
-            <form onSubmit={submitName} className="mt-6 space-y-4">
-              <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
-                  Your name
-                </span>
-                <input
-                  value={draftName}
-                  onChange={(event) => setDraftName(event.target.value)}
-                  placeholder="Enter your name"
-                  className="mt-2 w-full rounded-[1.2rem] border-2 border-black bg-transparent px-4 py-4 text-lg outline-none placeholder:text-black/35 focus:bg-white/35"
+          <div className="relative z-20">
+            {!name ? (
+              <form onSubmit={submitName} className="mt-6 space-y-4">
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
+                    Your name
+                  </span>
+                  <input
+                    value={draftName}
+                    onChange={(event) => setDraftName(event.target.value)}
+                    placeholder="Enter your name"
+                    className="mt-2 w-full rounded-[1.2rem] border-2 border-black bg-transparent px-4 py-4 text-lg outline-none placeholder:text-black/35 focus:bg-white/35"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className="w-full rounded-full border-2 border-black bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-[#d6ff35]"
+                >
+                  Join session
+                </button>
+              </form>
+            ) : currentQuiz && currentQuestion ? (
+              <div className="mt-6">
+                <QuestionCard
+                  slide={currentQuiz}
+                  question={currentQuestion}
+                  selectedId={selectedId}
+                  onVote={submitVote}
                 />
-              </label>
-              <button
-                type="submit"
-                className="w-full rounded-full border-2 border-black bg-black px-4 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-[#d6ff35]"
-              >
-                Join session
-              </button>
-            </form>
-          ) : currentQuiz && currentQuestion ? (
-            <div className="mt-6">
-              <QuestionCard
-                slide={currentQuiz}
-                question={currentQuestion}
-                selectedId={selectedId}
-                onVote={submitVote}
-              />
-            </div>
-          ) : (
-            <div className="mt-6 rounded-[1.5rem] border-2 border-black bg-black px-5 py-5 text-[#d6ff35]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-                Waiting
-              </p>
-              <p className="mt-3 text-lg leading-snug">
-                {sessionState?.currentSlideId
-                  ? "The presenter is not on a quiz slide right now. Your phone will update automatically when the next question opens."
-                  : "Waiting for the presenter to start the live session."}
-              </p>
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-[1.5rem] border-2 border-black bg-black px-5 py-5 text-[#d6ff35]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                  Waiting
+                </p>
+                <p className="mt-3 text-lg leading-snug">
+                  {sessionState?.currentSlideId
+                    ? "The presenter is not on a quiz slide right now. Your phone will update automatically when the next question opens."
+                    : "Waiting for the presenter to start the live session."}
+                </p>
+              </div>
+            )}
 
-          {error ? (
-            <div className="mt-4 rounded-[1.2rem] border-2 border-black bg-white/35 px-4 py-4">
-              <p className="text-sm leading-relaxed">{error}</p>
-            </div>
-          ) : null}
+            {error ? (
+              <div className="mt-4 rounded-[1.2rem] border-2 border-black bg-white/35 px-4 py-4">
+                <p className="text-sm leading-relaxed">{error}</p>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </main>
