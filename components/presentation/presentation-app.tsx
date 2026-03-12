@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   startTransition,
   useCallback,
@@ -502,7 +503,15 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
         {!presentationMode ? (
           <header className="mb-4 flex items-center justify-between gap-6">
             <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-current/62">
-              <span>Slice AI Hackathon</span>
+              <div className="rounded-full bg-[#d6ff35] px-3 py-2">
+                <Image
+                  src="/branding/slice-logo.svg"
+                  alt="Slice"
+                  width={72}
+                  height={24}
+                  className="h-4 w-auto"
+                />
+              </div>
               <span className="h-px w-8 bg-current/25" />
               <span>{currentSlide.id}</span>
             </div>

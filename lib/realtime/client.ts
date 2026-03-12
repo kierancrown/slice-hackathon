@@ -26,7 +26,8 @@ export function getPartySocketUrl(sessionCode: string) {
       ? "ws"
       : "wss";
 
-  return `${protocol}://${normalizedHost}/parties/${getPartyRoomPrefix()}/${sessionCode.toUpperCase()}`;
+  const roomId = `${getPartyRoomPrefix()}-${sessionCode.toUpperCase()}`;
+  return `${protocol}://${normalizedHost}/party/${roomId}`;
 }
 
 export function createPartySocket(sessionCode: string) {

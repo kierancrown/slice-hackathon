@@ -115,13 +115,24 @@ export function LiveSessionPanel({
   return (
     <aside className="absolute left-6 top-24 z-30 hidden w-[25rem] border border-current/20 bg-black/92 p-4 text-[#d6ff35] xl:block">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/58">
-            Live session
-          </p>
-          <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.05em]">
-            {sessionCode ?? "Offline"}
-          </p>
+        <div className="flex items-start gap-3">
+          <div className="rounded-[1rem] bg-[#d6ff35] p-3">
+            <Image
+              src="/branding/slice-symbol.svg"
+              alt="Slice symbol"
+              width={28}
+              height={26}
+              className="h-7 w-auto"
+            />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/58">
+              Live session
+            </p>
+            <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.05em]">
+              {sessionCode ?? "Offline"}
+            </p>
+          </div>
         </div>
         {sessionCode ? (
           <button

@@ -44,6 +44,7 @@ Notes:
 - `NEXT_PUBLIC_PARTYKIT_HOST` is required for presenter and audience sockets
 - `NEXT_PUBLIC_PARTYKIT_ROOM_PREFIX` is optional and defaults to `session`
 - `NEXT_PUBLIC_APP_URL` is used to generate the QR join URL in the presenter panel
+- websocket room URLs are built as `/party/<prefix>-<CODE>` for the default PartyKit server
 
 ## PartyKit
 

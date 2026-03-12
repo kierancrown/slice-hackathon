@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -231,13 +232,24 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
       <div className="mx-auto max-w-xl">
         <div className="rounded-[2rem] border-2 border-black bg-[#d6ff35] p-5 shadow-[10px_10px_0_rgba(0,0,0,0.12)]">
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
-                Slice live quiz
-              </p>
-              <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.05em]">
-                {normalizedCode}
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="rounded-[1rem] bg-black px-3 py-3">
+                <Image
+                  src="/branding/slice-logo.svg"
+                  alt="Slice"
+                  width={92}
+                  height={30}
+                  className="h-5 w-auto brightness-0 invert"
+                />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
+                  Slice live quiz
+                </p>
+                <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.05em]">
+                  {normalizedCode}
+                </p>
+              </div>
             </div>
             <div className="text-right text-xs font-semibold uppercase tracking-[0.18em] text-black/60">
               <p>{connected ? "Connected" : "Connecting"}</p>
