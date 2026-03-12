@@ -15,6 +15,7 @@ type LiveSessionPanelProps = {
   connected: boolean;
   error: string | null;
   state: RealtimeSessionState | null;
+  participantCount: number;
   currentQuestion: RealtimeQuestionState | null;
   onStart: () => void;
   onStop: () => void;
@@ -73,6 +74,7 @@ export function LiveSessionPanel({
   connected,
   error,
   state,
+  participantCount,
   currentQuestion,
   onStart,
   onStop,
@@ -169,7 +171,7 @@ export function LiveSessionPanel({
         {error ? <p className="mt-2 text-sm text-[#d6ff35]/78">{error}</p> : null}
         {state ? (
           <div className="mt-4 flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#d6ff35]/68">
-            <span>{state.participants.length} participants</span>
+            <span>{participantCount} participants</span>
             <span>{state.activeQuestionSlideId ? "Question live" : "Slide sync only"}</span>
           </div>
         ) : null}

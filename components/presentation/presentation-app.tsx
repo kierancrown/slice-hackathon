@@ -103,11 +103,14 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
   const currentIndexRef = useRef(0);
 
   const currentSlide = slides[currentIndex];
+  const isDarkSlide = currentSlide.theme === "ink" || currentSlide.theme === "pink";
   const answeredQuizCount = quizSlides.filter((slide) => quizProgress[slide.id]?.revealed).length;
   const score = quizSlides.filter((slide) => {
     const state = quizProgress[slide.id];
     return state?.revealed && state.selectedId === slide.answerId;
   }).length;
+  const audienceParticipantCount =
+    liveState?.participants.filter((participant) => participant.id !== presenterId).length ?? 0;
   const currentLiveQuestion = liveState?.questions[currentSlide.id] ?? null;
   const liveJoinUrl = liveSessionCode ? buildJoinUrl(liveSessionCode) : "";
 
@@ -582,7 +585,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
                   total={slides.length}
                   quizState={quizProgress[currentSlide.id]}
                   liveQuestion={currentLiveQuestion}
-                  participantCount={liveState?.participants.length ?? 0}
+                  participantCount={audienceParticipantCount}
                   sessionCode={liveSessionCode}
                   liveConnected={liveConnected}
                   onLiveReveal={revealLiveQuestion}
@@ -595,35 +598,14 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
           </AnimatePresence>
 
           <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-30 flex items-end justify-between gap-6">
-            <div className="pointer-events-auto flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => stepSlide(-1)}
-                className="grid h-14 w-24 place-items-center border border-current/24 bg-[#d6ff35] px-4 py-3 transition hover:border-current hover:bg-[#c8f12e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
-              >
-                <span className="sr-only">Previous slide</span>
-                <Image
-                  src="/branding/slice-logo.svg"
-                  alt=""
-                  width={72}
-                  height={24}
-                  className="h-4 w-auto"
-                />
-              </button>
-              <button
-                type="button"
-                onClick={() => stepSlide(1)}
-                className="grid h-14 w-24 place-items-center border border-current/24 bg-black px-4 py-3 transition hover:bg-[#171717] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
-              >
-                <span className="sr-only">Next slide</span>
-                <Image
-                  src="/branding/slice-logo.svg"
-                  alt=""
-                  width={72}
-                  height={24}
-                  className="h-4 w-auto brightness-0 invert"
-                />
-              </button>
+            <div className="flex items-center rounded-full border border-current/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <Image
+                src="/branding/slice-logo.svg"
+                alt="Slice"
+                width={84}
+                height={28}
+                className={`h-4 w-auto ${isDarkSlide ? "brightness-0 invert" : ""}`}
+              />
             </div>
 
             <div className="flex min-w-56 flex-col items-end gap-3">
@@ -780,6 +762,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
         connected={liveConnected}
         error={liveError}
         state={liveState}
+        participantCount={audienceParticipantCount}
         currentQuestion={currentLiveQuestion}
         onStart={startLiveSession}
         onStop={stopLiveSession}

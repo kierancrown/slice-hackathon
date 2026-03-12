@@ -308,6 +308,9 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
 
   const currentSlide = getSlideById(sessionState?.currentSlideId ?? null);
   const currentQuiz = isQuizSlide(currentSlide) ? currentSlide : null;
+  const audienceParticipantCount =
+    sessionState?.participants.filter((participant) => !participant.id.startsWith("presenter-"))
+      .length ?? 0;
   const currentQuestion =
     currentQuiz && sessionState ? sessionState.questions[currentQuiz.id] ?? null : null;
   const selectedId =
@@ -409,7 +412,7 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
             </div>
             <div className="text-right text-xs font-semibold uppercase tracking-[0.18em] text-black/60">
               <p>{connected ? "Connected" : "Connecting"}</p>
-              {sessionState ? <p>{sessionState.participants.length} joined</p> : null}
+              {sessionState ? <p>{audienceParticipantCount} joined</p> : null}
             </div>
           </div>
 
