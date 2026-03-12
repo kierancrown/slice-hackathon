@@ -50,7 +50,6 @@ export function QuizSlide({
   const participationCardClass = isDark
     ? "border-[#d6ff35]/18 bg-white/6 text-[#d6ff35]"
     : "border-black/18 bg-white/35 text-black";
-  const participationBarClass = isDark ? "bg-[#d6ff35]" : "bg-black";
 
   return (
     <div className="grid h-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -105,49 +104,14 @@ export function QuizSlide({
             </div>
 
             {liveQuestion ? (
-              <div className="mt-5 space-y-3">
+              <div className="mt-5 space-y-4">
                 <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.2em] opacity-65">
                   <span>{liveQuestion.totalVotes} votes</span>
                   <span>{liveQuestion.status}</span>
                 </div>
-                <div className="space-y-3">
-                  {slide.options.map((option) => {
-                    const votes = liveQuestion.totals[option.id] ?? 0;
-                    const percent = liveQuestion.totalVotes
-                      ? Math.round((votes / liveQuestion.totalVotes) * 100)
-                      : 0;
-                    const isCorrect = option.id === slide.answerId;
-
-                    return (
-                      <div
-                        key={option.id}
-                        className={`rounded-[1.2rem] border px-4 py-4 ${
-                          isDark
-                            ? isCorrect
-                              ? "border-[#d6ff35] bg-[#d6ff35] text-black"
-                              : "border-[#d6ff35]/14 bg-black/18 text-[#d6ff35]"
-                            : isCorrect
-                              ? "border-black bg-black text-[#d6ff35]"
-                              : "border-black/14 bg-white/55 text-black"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <p className="text-sm leading-snug">{option.text}</p>
-                          <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-75">
-                            <p>{votes}</p>
-                            <p>{percent}%</p>
-                          </div>
-                        </div>
-                        <div className={`mt-3 h-2 overflow-hidden rounded-full ${isDark ? "bg-white/10" : "bg-black/10"}`}>
-                          <div
-                            className={`h-full rounded-full ${participationBarClass}`}
-                            style={{ width: `${percent}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <p className="text-sm leading-relaxed opacity-78">
+                  Votes update directly in the answer cards on the right. Reveal or reset the live question from here.
+                </p>
 
                 <div className="flex items-center gap-3 pt-1">
                   <button
@@ -190,6 +154,11 @@ export function QuizSlide({
             const isCorrect = option.id === slide.answerId;
             const showCorrect = revealed && isCorrect;
             const showIncorrect = revealed && isSelected && !isCorrect;
+            const liveVotes = liveQuestion?.totals[option.id] ?? 0;
+            const livePercent = liveQuestion?.totalVotes
+              ? Math.round((liveVotes / liveQuestion.totalVotes) * 100)
+              : 0;
+            const shouldShowLiveResults = Boolean(liveQuestion);
 
             return (
               <button
@@ -210,11 +179,34 @@ export function QuizSlide({
                   <span className="mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.8rem] border-2 border-current font-display text-xl leading-none uppercase">
                     {option.label}
                   </span>
-                  <div className="space-y-2">
-                    <p className="text-xl leading-tight md:text-2xl">{option.text}</p>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-75">
-                      Choice {optionIndex + 1}
-                    </p>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-xl leading-tight md:text-2xl">{option.text}</p>
+                      {shouldShowLiveResults ? (
+                        <div className="shrink-0 text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-75">
+                          <p>{liveVotes}</p>
+                          <p>{livePercent}%</p>
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-75">
+                        Choice {optionIndex + 1}
+                      </p>
+                      {isSelected && !revealed ? (
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-75">
+                          Your pick
+                        </p>
+                      ) : null}
+                    </div>
+                    {shouldShowLiveResults ? (
+                      <div className={`h-2 overflow-hidden rounded-full ${showCorrect ? "bg-[#d6ff35]/18" : isDark ? "bg-white/10" : "bg-black/10"}`}>
+                        <div
+                          className={`h-full rounded-full ${showCorrect ? "bg-[#d6ff35]" : isDark ? "bg-[#d6ff35]" : "bg-black"}`}
+                          style={{ width: `${livePercent}%` }}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </button>

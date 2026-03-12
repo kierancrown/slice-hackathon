@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { haptic } from "ios-haptics";
+import { useWebHaptics } from "web-haptics/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { QuizSlide } from "@/components/presentation/types";
+import type { QuizSlide, Slide } from "@/components/presentation/types";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { getSlideById, isQuizSlide } from "@/lib/presentation";
 import {
@@ -26,6 +26,101 @@ const AUDIENCE_NAME_KEY = "slice-ai-audience-name";
 type JoinPageClientProps = {
   code: string;
 };
+
+function getSlideOverview(slide: Slide) {
+  switch (slide.kind) {
+    case "hero":
+      return {
+        intro: slide.subtitle,
+        items: [slide.supportingLine, slide.meta],
+      };
+    case "statement":
+      return {
+        intro: slide.body,
+        items: [...(slide.bullets ?? []), ...(slide.callout ? [slide.callout] : [])],
+      };
+    case "list":
+      return {
+        intro: slide.intro,
+        items: slide.items.map((item) => `${item.title}: ${item.description}`),
+      };
+    case "workflow":
+      return {
+        intro: slide.intro,
+        items: slide.steps.map((step) => `${step.name}: ${step.description}`),
+      };
+    case "function-grid":
+      return {
+        intro: slide.intro,
+        items: slide.items.map((item) => `${item.functionName}: ${item.examples.join(", ")}`),
+      };
+    case "timeline":
+      return {
+        intro: slide.intro,
+        items: slide.days.map((day) => `${day.label}: ${day.items.join(", ")}`),
+      };
+    case "prompts":
+      return {
+        intro: slide.intro,
+        items: slide.prompts,
+      };
+    case "closing":
+      return {
+        intro: slide.kicker,
+        items: slide.lines,
+      };
+    case "quiz":
+      return {
+        intro: slide.prompt,
+        items: slide.options.map((option) => option.text),
+      };
+    default:
+      return {
+        intro: "",
+        items: [],
+      };
+  }
+}
+
+function FollowAlongCard({ slide }: { slide: Slide }) {
+  const overview = getSlideOverview(slide);
+
+  return (
+    <div className="mt-6 rounded-[1.5rem] border-2 border-black bg-black px-5 py-5 text-[#d6ff35]">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+        Follow along
+      </p>
+      {slide.eyebrow ? (
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/60">
+          {slide.eyebrow}
+        </p>
+      ) : null}
+      <h2 className="mt-3 font-display text-4xl uppercase leading-[0.9] tracking-[-0.05em]">
+        {slide.title}
+      </h2>
+      {overview.intro ? (
+        <p className="mt-4 text-base leading-relaxed text-[#d6ff35]/82">{overview.intro}</p>
+      ) : null}
+      {overview.items.length ? (
+        <div className="mt-5 space-y-3">
+          {overview.items.slice(0, 5).map((item) => (
+            <div key={item} className="rounded-[1rem] border border-[#d6ff35]/14 bg-white/6 px-4 py-4">
+              <p className="text-sm leading-relaxed text-[#d6ff35]/84">{item}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {slide.speakerNotes ? (
+        <div className="mt-5 rounded-[1rem] border border-[#d6ff35]/14 bg-white/6 px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/58">
+            Notes
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[#d6ff35]/82">{slide.speakerNotes}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function QuestionCard({
   slide,
@@ -134,6 +229,7 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
   const previousSelectedIdRef = useRef<string | null>(null);
   const previousRevealStateRef = useRef<string>("");
   const normalizedCode = useMemo(() => code.toUpperCase(), [code]);
+  const { trigger } = useWebHaptics();
 
   useEffect(() => {
     if (!participantId || !name) {
@@ -226,8 +322,8 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
     }
 
     previousSelectedIdRef.current = selectedId;
-    haptic();
-  }, [selectedId]);
+    trigger();
+  }, [selectedId, trigger]);
 
   useEffect(() => {
     if (!currentQuiz || !currentQuestion) {
@@ -248,7 +344,10 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
 
     const isCorrect = selectedId === currentQuiz.answerId;
     if (isCorrect) {
-      haptic.confirm();
+      trigger([
+        { duration: 30 },
+        { delay: 60, duration: 40, intensity: 1 },
+      ]);
       confettiRef.current?.fire({
         particleCount: 120,
         spread: 80,
@@ -257,9 +356,12 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
         colors: ["#d6ff35", "#111111", "#c8f12e"],
       });
     } else {
-      haptic.error();
+      trigger([
+        { duration: 45, intensity: 1 },
+        { delay: 50, duration: 25, intensity: 0.65 },
+      ]);
     }
-  }, [currentQuestion, currentQuiz, revealKey, selectedId]);
+  }, [currentQuestion, currentQuiz, revealKey, selectedId, trigger]);
 
   const submitVote = (optionId: string) => {
     if (!currentQuiz || !participantId) {
@@ -341,15 +443,15 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
                   onVote={submitVote}
                 />
               </div>
+            ) : currentSlide ? (
+              <FollowAlongCard slide={currentSlide} />
             ) : (
               <div className="mt-6 rounded-[1.5rem] border-2 border-black bg-black px-5 py-5 text-[#d6ff35]">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
                   Waiting
                 </p>
                 <p className="mt-3 text-lg leading-snug">
-                  {sessionState?.currentSlideId
-                    ? "The presenter is not on a quiz slide right now. Your phone will update automatically when the next question opens."
-                    : "Waiting for the presenter to start the live session."}
+                  Waiting for the presenter to start the live session.
                 </p>
               </div>
             )}

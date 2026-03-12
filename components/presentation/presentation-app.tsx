@@ -81,7 +81,7 @@ type PresentationAppProps = {
 export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [presentationMode, setPresentationMode] = useState(false);
+  const [presentationMode, setPresentationMode] = useState(true);
   const [overviewMode, setOverviewMode] = useState(false);
   const [showHints, setShowHints] = useState(true);
   const [showLivePanel, setShowLivePanel] = useState(false);
@@ -466,6 +466,9 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
     } else if (event.key.toLowerCase() === "h") {
       event.preventDefault();
       setShowHints((current) => !current);
+    } else if (event.key.toLowerCase() === "m") {
+      event.preventDefault();
+      setPresentationMode((current) => !current);
     } else if (event.key.toLowerCase() === "p") {
       event.preventDefault();
       setPresentationMode((current) => !current);
@@ -532,7 +535,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
                 onClick={() => setPresentationMode((current) => !current)}
                 className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
-                Clean mode
+                Hide menu
               </button>
               <button
                 type="button"
@@ -596,16 +599,30 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <button
                 type="button"
                 onClick={() => stepSlide(-1)}
-                className="border border-current/24 bg-black/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.24em] transition hover:border-current hover:bg-black/18 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+                className="grid h-14 w-24 place-items-center border border-current/24 bg-[#d6ff35] px-4 py-3 transition hover:border-current hover:bg-[#c8f12e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
-                Prev
+                <span className="sr-only">Previous slide</span>
+                <Image
+                  src="/branding/slice-logo.svg"
+                  alt=""
+                  width={72}
+                  height={24}
+                  className="h-4 w-auto"
+                />
               </button>
               <button
                 type="button"
                 onClick={() => stepSlide(1)}
-                className="border border-current/24 bg-black px-4 py-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#d6ff35] transition hover:bg-[#171717] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+                className="grid h-14 w-24 place-items-center border border-current/24 bg-black px-4 py-3 transition hover:bg-[#171717] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
-                Next
+                <span className="sr-only">Next slide</span>
+                <Image
+                  src="/branding/slice-logo.svg"
+                  alt=""
+                  width={72}
+                  height={24}
+                  className="h-4 w-auto brightness-0 invert"
+                />
               </button>
             </div>
 
@@ -631,7 +648,8 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <span>O: overview</span>
               <span>J or /: jump</span>
               <span>Q: live QR</span>
-              <span>P: clean mode</span>
+              <span>M: toggle menu</span>
+              <span>P: toggle menu</span>
               <span>H: hide hints</span>
               <span>R: reset quiz</span>
             </div>
