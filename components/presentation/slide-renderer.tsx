@@ -40,7 +40,7 @@ const itemVariants = {
 
 const metaTextClass = "text-xs font-semibold uppercase tracking-[0.28em] text-current/60";
 const headingClass =
-  "font-display uppercase leading-[0.86] tracking-[-0.06em]";
+  "font-display uppercase leading-[0.9] tracking-[-0.02em]";
 const darkPanelClass =
   "border-2 border-black/90 bg-[#111111] text-[#d6ff35] shadow-[10px_10px_0_rgba(0,0,0,0.16)]";
 const limePanelClass =

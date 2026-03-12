@@ -101,7 +101,7 @@ export function QuizSlide({
             </span>
           </div>
           <div className="max-w-4xl space-y-5">
-            <h2 className="font-display text-6xl uppercase leading-[0.86] tracking-[-0.06em] md:text-7xl lg:text-[6.8rem]">
+            <h2 className="font-display text-6xl uppercase leading-[0.9] tracking-[-0.02em] md:text-7xl lg:text-[6.8rem]">
               {slide.title}
             </h2>
             <p className={`max-w-2xl text-xl leading-tight md:text-2xl ${promptClass}`}>
