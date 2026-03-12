@@ -1,0 +1,5 @@
+{
+  "name": "slice-ai-live",
+  "main": "partykit/session.ts",
+  "compatibilityDate": "2026-03-12"
+}

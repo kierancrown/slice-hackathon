@@ -1,0 +1,475 @@
+"use client";
+
+import { motion } from "framer-motion";
+
+import { QuizSlide } from "@/components/presentation/quiz-slide";
+import type { QuizProgress, Slide } from "@/components/presentation/types";
+
+type SlideRendererProps = {
+  slide: Slide;
+  index: number;
+  total: number;
+  quizState: QuizProgress[string] | undefined;
+  onQuizSelect: (slideId: string, optionId: string) => void;
+  onQuizReveal: (slideId: string) => void;
+};
+
+const containerVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const metaTextClass = "text-xs font-semibold uppercase tracking-[0.28em] text-current/60";
+const headingClass =
+  "font-display uppercase leading-[0.86] tracking-[-0.06em]";
+const darkPanelClass =
+  "border-2 border-black/90 bg-[#111111] text-[#d6ff35] shadow-[10px_10px_0_rgba(0,0,0,0.16)]";
+const limePanelClass =
+  "border-2 border-black/85 bg-[#d6ff35] text-black shadow-[10px_10px_0_rgba(0,0,0,0.1)]";
+
+function StepBadge({
+  value,
+  className,
+}: {
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`inline-flex min-h-16 min-w-16 items-center justify-center rounded-[0.8rem] border-2 border-black/85 px-4 font-display text-4xl leading-none tracking-[-0.05em] ${className ?? "bg-black text-[#d6ff35]"}`}
+    >
+      {value}
+    </div>
+  );
+}
+
+export function SlideRenderer({
+  slide,
+  index,
+  total,
+  quizState,
+  onQuizSelect,
+  onQuizReveal,
+}: SlideRendererProps) {
+  const isDark = slide.theme === "ink" || slide.theme === "pink";
+
+  if (slide.kind === "quiz") {
+    return (
+      <QuizSlide
+        slide={slide}
+        index={index}
+        total={total}
+        isDark={isDark}
+        selectedId={quizState?.selectedId ?? null}
+        revealed={quizState?.revealed ?? false}
+        onSelect={(optionId) => onQuizSelect(slide.id, optionId)}
+        onReveal={() => onQuizReveal(slide.id)}
+      />
+    );
+  }
+
+  if (slide.kind === "hero") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex h-full flex-col justify-between gap-10"
+      >
+        <motion.div variants={itemVariants} className="flex items-start justify-between gap-6">
+          <p className={`${metaTextClass} text-black/70`}>{slide.eyebrow}</p>
+          <div className="inline-flex items-center gap-3 rounded-full border-2 border-black/85 bg-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#d6ff35]">
+            <span>Slice Mobile</span>
+            <span className="h-px w-8 bg-[#d6ff35]/40" />
+            <span>
+              {index + 1}/{total}
+            </span>
+          </div>
+        </motion.div>
+
+        <div className="grid flex-1 items-start gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+          <motion.div variants={itemVariants} className="space-y-6">
+            <div className="inline-flex items-center rounded-full border-2 border-black/85 bg-white/35 px-4 py-2 text-sm font-semibold uppercase tracking-[0.22em] text-black/80">
+              {slide.meta}
+            </div>
+            <h1 className={`${headingClass} max-w-5xl text-[4.3rem] md:text-[6.8rem] lg:text-[8.6rem]`}>
+              {slide.title}
+            </h1>
+            <p className="max-w-3xl text-2xl leading-[1.04] text-black/82 md:text-3xl">
+              {slide.subtitle}
+            </p>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className={`${darkPanelClass} flex flex-col justify-between gap-8 rounded-[2rem] p-7`}>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d6ff35]/72">
+                What this is
+              </p>
+              <p className="mt-4 text-[1.65rem] leading-[1.02] md:text-[1.95rem]">
+                {slide.supportingLine}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <StepBadge value={String(index + 1).padStart(2, "0")} className="bg-[#d6ff35] text-black" />
+              <div className="h-3 flex-1 rounded-full bg-[#d6ff35]/18">
+                <div className="h-full w-2/3 rounded-full bg-[#d6ff35]" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.div variants={itemVariants} className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className={`${limePanelClass} rounded-[1.6rem] px-6 py-5`}>
+            <p className="text-sm uppercase tracking-[0.22em] text-black/56">Big theme</p>
+            <p className="mt-3 max-w-3xl text-xl leading-tight md:text-2xl">
+              Practical, collaborative AI work over polished theatre.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <div className="h-4 w-40 rounded-full bg-black/90" />
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  if (slide.kind === "statement") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid h-full gap-8 lg:grid-cols-[1.08fr_0.92fr]"
+      >
+        <div className="flex flex-col justify-between gap-8">
+          <div className="space-y-6">
+            <motion.p variants={itemVariants} className={metaTextClass}>
+              {slide.eyebrow}
+            </motion.p>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-4xl text-6xl md:text-7xl lg:text-[6.4rem]`}>
+              {slide.title}
+            </motion.h2>
+            <motion.p variants={itemVariants} className="max-w-3xl text-xl leading-[1.12] md:text-2xl">
+              {slide.body}
+            </motion.p>
+          </div>
+          {slide.callout ? (
+            <motion.div variants={itemVariants} className={`${darkPanelClass} max-w-2xl rounded-[1.8rem] px-6 py-6`}>
+              <p className="text-sm uppercase tracking-[0.22em] text-[#d6ff35]/68">Key point</p>
+              <p className="mt-3 text-lg leading-snug md:text-xl">{slide.callout}</p>
+            </motion.div>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col justify-between gap-6">
+          <motion.div variants={itemVariants} className="flex justify-end">
+            <div className="inline-flex items-center gap-3 rounded-full border-2 border-black/85 bg-white/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-current/80">
+              <span>{slide.sideLabel ?? "Slice AI"}</span>
+              <span>{index + 1}/{total}</span>
+            </div>
+          </motion.div>
+          {slide.bullets ? (
+            <motion.div variants={itemVariants} className="grid gap-4">
+              {slide.bullets.map((bullet, bulletIndex) => {
+                return (
+                  <div key={bullet} className={`${limePanelClass} rounded-[1.7rem] p-5`}>
+                    <div className="flex items-start gap-4">
+                      <StepBadge value={String(bulletIndex + 1).padStart(2, "0")} className="bg-black text-[#d6ff35]" />
+                      <p className="pt-1 text-2xl leading-[1.02] md:text-[2rem]">{bullet}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          ) : (
+            <div />
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (slide.kind === "list") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex h-full flex-col gap-8"
+      >
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-4">
+            <motion.p variants={itemVariants} className={metaTextClass}>
+              {slide.eyebrow}
+            </motion.p>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[6.2rem]`}>
+              {slide.title}
+            </motion.h2>
+          </div>
+          <motion.div variants={itemVariants}>
+            <StepBadge value={String(index + 1).padStart(2, "0")} />
+          </motion.div>
+        </div>
+        <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
+          {slide.intro}
+        </motion.p>
+        <div className="grid flex-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {slide.items.map((item, itemIndex) => {
+            return (
+              <motion.div key={item.title} variants={itemVariants} className={`${limePanelClass} flex flex-col rounded-[1.8rem] p-6`}>
+                <div className="flex items-start justify-between gap-4">
+                  <p className="max-w-xs font-display text-3xl uppercase leading-[0.9] tracking-[-0.05em] md:text-[2.6rem]">
+                    {item.title}
+                  </p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-black/56">
+                    {String(itemIndex + 1).padStart(2, "0")}
+                  </p>
+                </div>
+                <p className="mt-4 text-lg leading-snug text-black/82">{item.description}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+        {slide.footer ? (
+          <motion.div variants={itemVariants} className={`${darkPanelClass} max-w-4xl rounded-[1.8rem] px-6 py-5`}>
+            <p className="text-lg leading-snug md:text-xl">{slide.footer}</p>
+          </motion.div>
+        ) : null}
+      </motion.div>
+    );
+  }
+
+  if (slide.kind === "workflow") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex h-full flex-col gap-8"
+      >
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-4">
+            <motion.p variants={itemVariants} className={metaTextClass}>
+              {slide.eyebrow}
+            </motion.p>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[5.8rem]`}>
+              {slide.title}
+            </motion.h2>
+          </div>
+          <motion.div variants={itemVariants}>
+            <StepBadge value={String(index + 1).padStart(2, "0")} />
+          </motion.div>
+        </div>
+        <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
+          {slide.intro}
+        </motion.p>
+        <div className="grid flex-1 gap-4 lg:grid-cols-5">
+          {slide.steps.map((step, stepIndex) => (
+            <motion.div key={step.name} variants={itemVariants} className={`${limePanelClass} flex flex-col rounded-[1.8rem] p-5`}>
+              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-black/55">
+                Step {stepIndex + 1}
+              </p>
+              <p className="mt-3 font-display text-4xl uppercase leading-[0.9] tracking-[-0.05em]">
+                {step.name}
+              </p>
+              <p className="mt-4 text-lg leading-snug text-black/82">{step.description}</p>
+              <div className={`${darkPanelClass} mt-auto rounded-[1.3rem] px-4 py-4`}>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/65">
+                  AI helps with
+                </p>
+                <p className="mt-2 text-base leading-snug">{step.aiHelpsWith}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (slide.kind === "function-grid") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex h-full flex-col gap-8"
+      >
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-4">
+            <motion.p variants={itemVariants} className={metaTextClass}>
+              {slide.eyebrow}
+            </motion.p>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[5.8rem]`}>
+              {slide.title}
+            </motion.h2>
+          </div>
+          <motion.div variants={itemVariants}>
+            <StepBadge value={String(index + 1).padStart(2, "0")} />
+          </motion.div>
+        </div>
+        <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
+          {slide.intro}
+        </motion.p>
+        <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {slide.items.map((item) => {
+            return (
+              <motion.div key={item.functionName} variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] p-5`}>
+                <p className="font-display text-3xl uppercase leading-[0.9] tracking-[-0.05em] md:text-4xl">
+                  {item.functionName}
+                </p>
+                <div className="mt-4 space-y-3">
+                  {item.examples.map((example) => (
+                    <p key={example} className="border-t-2 border-black/15 pt-3 text-lg leading-snug text-black/80">
+                      {example}
+                    </p>
+                  ))}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (slide.kind === "timeline") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex h-full flex-col gap-8"
+      >
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-4">
+            <motion.p variants={itemVariants} className={metaTextClass}>
+              {slide.eyebrow}
+            </motion.p>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[5.8rem]`}>
+              {slide.title}
+            </motion.h2>
+          </div>
+          <motion.div variants={itemVariants}>
+            <StepBadge value={String(index + 1).padStart(2, "0")} />
+          </motion.div>
+        </div>
+        <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
+          {slide.intro}
+        </motion.p>
+        <div className="grid flex-1 gap-6 lg:grid-cols-2">
+          {slide.days.map((day) => {
+            const panelClass = day.theme === "ink" ? darkPanelClass : limePanelClass;
+
+            return (
+              <motion.div key={day.label} variants={itemVariants} className={`${panelClass} flex flex-col justify-between gap-6 rounded-[2rem] p-6`}>
+                <p className="font-display text-5xl uppercase leading-none tracking-[-0.06em] md:text-6xl">
+                  {day.label}
+                </p>
+                <div className="space-y-4">
+                  {day.items.map((item, itemIndex) => (
+                    <div key={item} className="border-t-2 border-current/20 pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] opacity-70">
+                        {String(itemIndex + 1).padStart(2, "0")}
+                      </p>
+                      <p className="mt-2 text-2xl leading-tight">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (slide.kind === "prompts") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid h-full gap-8 lg:grid-cols-[1fr_1fr]"
+      >
+        <div className="flex flex-col justify-between gap-8">
+          <div className="space-y-4">
+            <motion.p variants={itemVariants} className={metaTextClass}>
+              {slide.eyebrow}
+            </motion.p>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-4xl text-6xl md:text-7xl lg:text-[5.9rem]`}>
+              {slide.title}
+            </motion.h2>
+          </div>
+          <motion.p variants={itemVariants} className="max-w-2xl text-xl leading-[1.08] md:text-2xl">
+            {slide.intro}
+          </motion.p>
+          <motion.div variants={itemVariants}>
+            <div className={`${darkPanelClass} inline-flex items-center gap-3 rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.24em]`}>
+              <span>Idea spark</span>
+              <span>
+                {index + 1}/{total}
+              </span>
+            </div>
+          </motion.div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {slide.prompts.map((prompt) => {
+            return (
+              <motion.div key={prompt} variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] p-5`}>
+                <p className="text-xl leading-snug md:text-2xl">{prompt}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="flex h-full flex-col justify-between gap-10"
+    >
+      <div className="space-y-6">
+        <motion.p variants={itemVariants} className={metaTextClass}>
+          {slide.eyebrow}
+        </motion.p>
+        <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-[4.5rem] md:text-[7rem] lg:text-[8.2rem]`}>
+          {slide.title}
+        </motion.h2>
+      </div>
+      <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+        <motion.div variants={itemVariants} className="space-y-4">
+          {slide.lines.map((line) => {
+            return (
+              <div key={line} className={`${limePanelClass} rounded-[1.7rem] px-5 py-5`}>
+                <p className="text-2xl leading-tight md:text-4xl">{line}</p>
+              </div>
+            );
+          })}
+        </motion.div>
+        <motion.div variants={itemVariants} className={`${darkPanelClass} justify-self-end rounded-[2rem] px-6 py-6 lg:max-w-xl`}>
+          <p className="text-sm uppercase tracking-[0.22em] text-[#d6ff35]/62">Final push</p>
+          <p className="mt-4 text-2xl leading-tight md:text-3xl">{slide.kicker}</p>
+        </motion.div>
+      </div>
+      <motion.div variants={itemVariants} className="flex justify-end">
+        <StepBadge value={String(index + 1).padStart(2, "0")} />
+      </motion.div>
+    </motion.div>
+  );
+}

@@ -1,26 +1,109 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "SliceSans";
+  src: url("/fonts/SliceSans-Black.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/DMSans-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/DMSans-Medium.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/DMSans-SemiBold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/DMSans-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/DMSans-Italic.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --slice-lime: #d6ff35;
+  --slice-ink: #111111;
+  --slice-blue: #27a4ff;
+  --slice-pink: #ff5ab8;
+  --slice-paper: #f5f3e8;
+  --slice-lilac: #d9b9ff;
+  --slice-mint: #9be060;
+  --slice-sky: #94abff;
+  --slice-font-display: "SliceSans", Impact, Haettenschweiler,
+    "Arial Narrow Bold", "Franklin Gothic Condensed", "Helvetica Inserat",
+    sans-serif;
+  --font-body: "DM Sans", "Aptos", "Segoe UI", "Helvetica Neue", "Arial Nova",
+    Arial, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
+  --font-display: var(--slice-font-display);
+  --color-background: var(--slice-lime);
+  --color-foreground: var(--slice-ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--slice-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 26%),
+    linear-gradient(180deg, #d1fb1b 0%, var(--slice-lime) 100%);
+  color: var(--slice-ink);
+  font-family: var(--font-body);
+  text-rendering: geometricPrecision;
+}
+
+::selection {
+  background: var(--slice-blue);
+  color: var(--slice-ink);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.font-display {
+  font-family: var(--slice-font-display);
 }
