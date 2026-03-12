@@ -17,6 +17,7 @@ import type { QuizProgress, Slide, SlideTheme } from "@/components/presentation/
 import { slides } from "@/data/slides";
 import {
   buildJoinUrl,
+  buildRemoteUrl,
   createPartySocket,
   getPartyHost,
   getOrCreateStoredValue,
@@ -84,7 +85,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
   const [presentationMode, setPresentationMode] = useState(true);
   const [overviewMode, setOverviewMode] = useState(false);
   const [showHints, setShowHints] = useState(true);
-  const [showLivePanel, setShowLivePanel] = useState(false);
+  const [showLivePanelMode, setShowLivePanelMode] = useState<"audience" | "remote" | null>(null);
   const [showJumpPalette, setShowJumpPalette] = useState(false);
   const [jumpValue, setJumpValue] = useState("");
   const [quizProgress, setQuizProgress] = useState<QuizProgress>({});
@@ -123,6 +124,8 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
           .map((participant) => participant.name)
       : [];
   const liveJoinUrl = liveSessionCode ? buildJoinUrl(liveSessionCode) : "";
+  const remoteJoinUrl =
+    liveSessionCode && presenterSecret ? buildRemoteUrl(liveSessionCode, presenterSecret) : "";
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -490,7 +493,10 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
       setShowJumpPalette(true);
     } else if (event.key.toLowerCase() === "q") {
       event.preventDefault();
-      setShowLivePanel((current) => !current);
+      setShowLivePanelMode((current) => (current === "audience" ? null : "audience"));
+    } else if (event.key.toLowerCase() === "w") {
+      event.preventDefault();
+      setShowLivePanelMode((current) => (current === "remote" ? null : "remote"));
     } else if (event.key.toLowerCase() === "v") {
       event.preventDefault();
       if (liveSessionCode && currentSlide.kind === "quiz") {
@@ -566,10 +572,25 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               </button>
               <button
                 type="button"
-                onClick={() => setShowLivePanel((current) => !current)}
+                onClick={() =>
+                  setShowLivePanelMode((current) =>
+                    current === "audience" ? null : "audience",
+                  )
+                }
                 className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
                 Live QR
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setShowLivePanelMode((current) =>
+                    current === "remote" ? null : "remote",
+                  )
+                }
+                className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+              >
+                Remote QR
               </button>
             </div>
           </header>
@@ -648,6 +669,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <span>O: overview</span>
               <span>J or /: jump</span>
               <span>Q: live QR</span>
+              <span>W: remote QR</span>
               <span>V: reveal answer</span>
               <span>M: toggle menu</span>
               <span>P: toggle menu</span>
@@ -774,10 +796,11 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
       ) : null}
 
       <LiveSessionPanel
-        visible={showLivePanel}
+        visible={showLivePanelMode !== null}
+        mode={showLivePanelMode ?? "audience"}
         currentSlide={currentSlide}
         sessionCode={liveSessionCode}
-        joinUrl={liveJoinUrl}
+        joinUrl={showLivePanelMode === "remote" ? remoteJoinUrl : liveJoinUrl}
         connected={liveConnected}
         error={liveError}
         state={liveState}

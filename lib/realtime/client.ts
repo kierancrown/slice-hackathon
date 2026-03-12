@@ -60,6 +60,19 @@ export function buildJoinUrl(sessionCode: string) {
   return `${appUrl}/join/${sessionCode.toUpperCase()}`;
 }
 
+export function buildRemoteUrl(sessionCode: string, presenterSecret: string) {
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    return "";
+  }
+
+  const params = new URLSearchParams({
+    token: presenterSecret,
+  });
+
+  return `${appUrl}/remote/${sessionCode.toUpperCase()}?${params.toString()}`;
+}
+
 export function randomCode(length = 4) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from({ length }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");

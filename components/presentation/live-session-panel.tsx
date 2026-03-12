@@ -9,6 +9,7 @@ import type { RealtimeQuestionState, RealtimeSessionState } from "@/lib/realtime
 
 type LiveSessionPanelProps = {
   visible: boolean;
+  mode: "audience" | "remote";
   currentSlide: Slide;
   sessionCode: string | null;
   joinUrl: string;
@@ -68,6 +69,7 @@ function QuizResults({
 
 export function LiveSessionPanel({
   visible,
+  mode,
   currentSlide,
   sessionCode,
   joinUrl,
@@ -115,6 +117,11 @@ export function LiveSessionPanel({
   }, [joinUrl]);
 
   const currentQuiz = currentSlide.kind === "quiz" ? currentSlide : null;
+  const panelLabel = mode === "remote" ? "Remote control" : "Audience join";
+  const panelDescription =
+    mode === "remote"
+      ? "Scan this on your phone to control the deck remotely."
+      : "Scan this on attendee phones to join the live quiz.";
 
   return (
     <aside
@@ -180,12 +187,13 @@ export function LiveSessionPanel({
       {sessionCode && joinUrl ? (
         <div className="mt-4 rounded-[1.4rem] border border-[#d6ff35]/18 bg-[#d6ff35] p-4 text-black">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/58">
-            Audience join
+            {panelLabel}
           </p>
+          <p className="mt-2 text-sm leading-relaxed text-black/72">{panelDescription}</p>
           {qrDataUrl ? (
             <Image
               src={qrDataUrl}
-              alt={`QR code to join session ${sessionCode}`}
+              alt={`QR code for ${panelLabel.toLowerCase()} ${sessionCode}`}
               width={160}
               height={160}
               className="mt-3 h-40 w-40 border border-black/20 bg-[#d6ff35]"
