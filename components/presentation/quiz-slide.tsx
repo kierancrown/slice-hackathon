@@ -13,6 +13,7 @@ type QuizSlideProps = {
   selectedId: string | null;
   revealed: boolean;
   liveQuestion: RealtimeQuestionState | null;
+  participantCount: number;
   onSelect: (optionId: string) => void;
   onReveal: () => void;
 };
@@ -25,6 +26,7 @@ export function QuizSlide({
   selectedId,
   revealed,
   liveQuestion,
+  participantCount,
   onSelect,
   onReveal,
 }: QuizSlideProps) {
@@ -43,6 +45,8 @@ export function QuizSlide({
     : 0;
   const revealBannerVisible = liveQuestion?.status === "revealed";
   const correctOption = slide.answers.find((option) => option.id === slide.correctAnswer);
+  const votedCount = liveQuestion?.totalVotes ?? 0;
+  const votingOpen = liveQuestion?.status === "open";
 
   return (
     <div className="relative grid h-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -136,6 +140,34 @@ export function QuizSlide({
           </p>
         </div>
 
+        {liveQuestion ? (
+          <div
+            className={`rounded-[1.8rem] border-2 px-5 py-5 ${
+              isDark ? "border-[#d6ff35]/18 bg-white/6 text-[#d6ff35]" : "border-black/18 bg-white/35 text-black"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-60">
+                  Live vote progress
+                </p>
+                <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.05em] md:text-5xl">
+                  {votedCount}/{participantCount}
+                </p>
+              </div>
+              <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
+                <p>{liveQuestion.status}</p>
+                <p>{participantCount} expected</p>
+              </div>
+            </div>
+            <p className="mt-4 text-lg leading-snug opacity-82">
+              {votingOpen
+                ? "Waiting for the room to finish voting. The answer will reveal once everyone is in."
+                : "Voting is closed. Reveal stats are on screen now."}
+            </p>
+          </div>
+        ) : null}
+
       </div>
 
       <div className="flex h-full flex-col justify-between gap-6">
@@ -149,7 +181,7 @@ export function QuizSlide({
             const livePercent = liveQuestion?.totalVotes
               ? Math.round((liveVotes / liveQuestion.totalVotes) * 100)
               : 0;
-            const shouldShowLiveResults = Boolean(liveQuestion);
+            const shouldShowLiveResults = liveQuestion?.status === "revealed";
 
             return (
               <button

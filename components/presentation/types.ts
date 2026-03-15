@@ -78,14 +78,22 @@ export type QuizSlide = BaseSlide & {
   explanation: string;
 };
 
+export type VoteOption = {
+  id: string;
+  label: string;
+  detail?: string;
+};
+
 export type VotingSlide = BaseSlide & {
   kind: "vote";
   intro: string;
   items: string[];
   footer?: string;
   voting: {
-    status: "coming-soon";
+    status: "live-ready";
     prompt: string;
+    options: VoteOption[];
+    revealLabel: string;
   };
 };
 
@@ -115,6 +123,8 @@ export type SlideRef = {
   deckId: DeckId;
   slideId: string;
 };
+
+export type InteractiveSlide = QuizSlide | VotingSlide;
 
 export type QuizProgress = Record<
   string,

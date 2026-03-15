@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
-import type { QuizSlide, Slide } from "@/components/presentation/types";
+import type { InteractiveSlide, Slide } from "@/components/presentation/types";
 import type { RealtimeQuestionState, RealtimeSessionState } from "@/lib/realtime/protocol";
 
 type LiveSessionPanelProps = {
@@ -28,15 +28,17 @@ function QuizResults({
   slide,
   question,
 }: {
-  slide: QuizSlide;
+  slide: InteractiveSlide;
   question: RealtimeQuestionState;
 }) {
+  const options = slide.kind === "quiz" ? slide.answers : slide.voting.options;
+
   return (
     <div className="space-y-3">
-      {slide.answers.map((option) => {
+      {options.map((option) => {
         const votes = question.totals[option.id] ?? 0;
         const percent = question.totalVotes ? Math.round((votes / question.totalVotes) * 100) : 0;
-        const isCorrect = option.id === slide.correctAnswer;
+        const isCorrect = slide.kind === "quiz" ? option.id === slide.correctAnswer : false;
 
         return (
           <div
@@ -116,12 +118,13 @@ export function LiveSessionPanel({
     };
   }, [joinUrl]);
 
-  const currentQuiz = currentSlide.kind === "quiz" ? currentSlide : null;
+  const currentInteractiveSlide =
+    currentSlide.kind === "quiz" || currentSlide.kind === "vote" ? currentSlide : null;
   const panelLabel = mode === "remote" ? "Remote control" : "Audience join";
   const panelDescription =
     mode === "remote"
       ? "Scan this on your phone to control the deck remotely."
-      : "Scan this on attendee phones to join the live quiz.";
+      : "Scan this on attendee phones to join the live session.";
 
   return (
     <aside
@@ -205,14 +208,14 @@ export function LiveSessionPanel({
         </div>
       ) : null}
 
-      {currentQuiz && currentQuestion ? (
+      {currentInteractiveSlide && currentQuestion ? (
         <div className="mt-4 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/58">
-                Current quiz
+                Current live item
               </p>
-              <p className="mt-2 text-lg leading-tight">{currentQuiz.title}</p>
+              <p className="mt-2 text-lg leading-tight">{currentInteractiveSlide.title}</p>
             </div>
             <div className="text-right text-xs font-semibold uppercase tracking-[0.18em] text-[#d6ff35]/68">
               <p>{currentQuestion.totalVotes} votes</p>
@@ -220,7 +223,7 @@ export function LiveSessionPanel({
             </div>
           </div>
 
-          <QuizResults slide={currentQuiz} question={currentQuestion} />
+          <QuizResults slide={currentInteractiveSlide} question={currentQuestion} />
 
           <div className="flex items-center gap-3">
             <button
@@ -245,7 +248,7 @@ export function LiveSessionPanel({
             Current state
           </p>
           <p className="mt-2 text-sm leading-relaxed text-[#d6ff35]/80">
-            Audience phones will follow the active slide automatically. Move onto a quiz slide to open voting.
+            Audience phones will follow the active slide automatically. Move onto a quiz or vote slide to open live participation.
           </p>
         </div>
       ) : null}

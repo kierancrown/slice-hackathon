@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import QRCode from "qrcode";
 
 import { QuizSlide } from "@/components/presentation/quiz-slide";
+import { VoteSlide } from "@/components/presentation/vote-slide";
 import type { QuizProgress, Slide } from "@/components/presentation/types";
 import { buildJoinUrl } from "@/lib/realtime/client";
 
@@ -246,8 +247,22 @@ export function SlideRenderer({
         selectedId={quizState?.selectedId ?? null}
         revealed={quizState?.revealed ?? false}
         liveQuestion={liveQuestion ?? null}
+        participantCount={participantCount}
         onSelect={(optionId) => onQuizSelect(slide.id, optionId)}
         onReveal={() => onQuizReveal(slide.id)}
+      />
+    );
+  }
+
+  if (slide.kind === "vote") {
+    return (
+      <VoteSlide
+        slide={slide}
+        index={index}
+        total={total}
+        isDark={isDark}
+        liveQuestion={liveQuestion ?? null}
+        participantCount={participantCount}
       />
     );
   }
@@ -617,65 +632,6 @@ export function SlideRenderer({
             <p className="text-lg leading-snug md:text-xl">{slide.footer}</p>
           </motion.div>
         ) : null}
-      </motion.div>
-    );
-  }
-
-  if (slide.kind === "vote") {
-    return (
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid h-full gap-8 lg:grid-cols-[1fr_0.92fr]"
-      >
-        <div className="flex flex-col gap-8">
-          <div className="space-y-4">
-            <motion.p variants={itemVariants} className={metaTextClass}>
-              {slide.eyebrow ?? "Voting"}
-            </motion.p>
-            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[6rem]`}>
-              {slide.title}
-            </motion.h2>
-            <motion.p variants={itemVariants} className="max-w-3xl text-xl leading-[1.1] md:text-2xl">
-              {slide.intro}
-            </motion.p>
-          </div>
-
-          <div className="grid gap-4">
-            {slide.items.map((item, itemIndex) => (
-              <motion.div key={item} variants={itemVariants} className={`${limePanelClass} rounded-[1.7rem] p-5`}>
-                <div className="flex items-start gap-4">
-                  <StepBadge
-                    value={String(itemIndex + 1).padStart(2, "0")}
-                    className="bg-black text-[#d6ff35]"
-                  />
-                  <p className="pt-1 text-2xl leading-[1.02] md:text-[2rem]">{item}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col justify-between gap-6">
-          <motion.div variants={itemVariants} className={`${darkPanelClass} rounded-[2rem] p-6`}>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/62">
-              Voting mode
-            </p>
-            <p className="mt-4 font-display text-4xl uppercase leading-[0.92] tracking-[-0.05em] md:text-5xl">
-              {slide.voting.status === "coming-soon" ? "Coming soon" : slide.voting.status}
-            </p>
-            <p className="mt-4 text-lg leading-snug text-[#d6ff35]/82">{slide.voting.prompt}</p>
-          </motion.div>
-          {slide.footer ? (
-            <motion.div variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] px-6 py-5`}>
-              <p className="text-lg leading-snug md:text-xl">{slide.footer}</p>
-            </motion.div>
-          ) : null}
-          <motion.div variants={itemVariants} className="flex justify-end">
-            <StepBadge value={String(index + 1).padStart(2, "0")} />
-          </motion.div>
-        </div>
       </motion.div>
     );
   }

@@ -3,7 +3,13 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { decks, getDeckById, getDeckIdForSlide, getSlideById } from "@/lib/presentation";
+import {
+  decks,
+  getDeckById,
+  getDeckIdForSlide,
+  getSlideById,
+  isInteractiveSlide,
+} from "@/lib/presentation";
 import { createPartySocket } from "@/lib/realtime/client";
 import type {
   ClientMessage,
@@ -160,7 +166,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
   const currentIndex = currentSlide
     ? currentDeck?.slides.findIndex((slide) => slide.id === currentSlide.id) ?? -1
     : -1;
-  const currentQuiz = currentSlide?.kind === "quiz" ? currentSlide : null;
+  const currentInteractiveSlide = isInteractiveSlide(currentSlide) ? currentSlide : null;
   const facilitationTimer = sessionState?.facilitationTimer ?? null;
   const facilitationTimerLabel = formatRemaining(facilitationTimer, now);
   const facilitationTimerActive =
@@ -204,25 +210,25 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
   };
 
   const reveal = () => {
-    if (!currentQuiz) {
+    if (!currentInteractiveSlide) {
       return;
     }
 
     send({
       type: "question_reveal",
-      slideId: currentQuiz.id,
+      slideId: currentInteractiveSlide.id,
       presenterSecret: token,
     });
   };
 
-  const resetQuiz = () => {
-    if (!currentQuiz) {
+  const resetInteractiveSlide = () => {
+    if (!currentInteractiveSlide) {
       return;
     }
 
     send({
       type: "question_reset",
-      slideId: currentQuiz.id,
+      slideId: currentInteractiveSlide.id,
       presenterSecret: token,
     });
   };
@@ -268,8 +274,10 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
 
   const contextualActionLabel = isBuildLoopMode
     ? "Return to slides"
-    : currentQuiz
-      ? "Reveal answer"
+    : currentInteractiveSlide
+      ? currentInteractiveSlide.kind === "vote"
+        ? "Reveal winner"
+        : "Reveal answer"
       : currentSlide?.id === "team-formation"
         ? facilitationTimerActive
           ? "Reset timer"
@@ -282,7 +290,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
       return;
     }
 
-    if (currentQuiz) {
+    if (currentInteractiveSlide) {
       reveal();
       return;
     }
@@ -388,13 +396,13 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
                 </button>
               ) : null}
 
-              {currentQuiz ? (
+              {currentInteractiveSlide ? (
                 <button
                   type="button"
-                  onClick={resetQuiz}
+                  onClick={resetInteractiveSlide}
                   className="w-full rounded-[1.2rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em]"
                 >
-                  Reset question
+                  {currentInteractiveSlide.kind === "vote" ? "Reset vote" : "Reset question"}
                 </button>
               ) : null}
 
@@ -436,13 +444,24 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
                 </p>
               </div>
 
-              {currentQuiz ? (
+              {currentInteractiveSlide?.kind === "quiz" ? (
                 <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
                     Quiz answer
                   </p>
                   <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
-                    Correct answer: {currentQuiz.correctAnswer}. {currentQuiz.correctConcept}
+                    Correct answer: {currentInteractiveSlide.correctAnswer}. {currentInteractiveSlide.correctConcept}
+                  </p>
+                </div>
+              ) : null}
+
+              {currentInteractiveSlide?.kind === "vote" ? (
+                <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                    Live vote
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
+                    {currentInteractiveSlide.voting.prompt}
                   </p>
                 </div>
               ) : null}

@@ -1,4 +1,4 @@
-import { quizSlides, quizSlidesById } from "@/lib/presentation";
+import { interactiveSlides, interactiveSlidesById } from "@/lib/presentation";
 
 export type RealtimeParticipant = {
   id: string;
@@ -148,17 +148,18 @@ export type ServerMessage =
   | QuestionStateMessage
   | ErrorMessage;
 
-export const realtimeQuizSlides = quizSlides;
+export const realtimeInteractiveSlides = interactiveSlides;
 
-export const realtimeQuizSlidesById = quizSlidesById;
+export const realtimeInteractiveSlidesById = interactiveSlidesById;
 
 export function createEmptyQuestionState(slideId: string): RealtimeQuestionState | null {
-  const slide = realtimeQuizSlidesById.get(slideId);
+  const slide = realtimeInteractiveSlidesById.get(slideId);
   if (!slide) {
     return null;
   }
 
-  const totals = Object.fromEntries(slide.answers.map((option) => [option.id, 0]));
+  const optionSource = slide.kind === "quiz" ? slide.answers : slide.voting.options;
+  const totals = Object.fromEntries(optionSource.map((option) => [option.id, 0]));
 
   return {
     slideId,
@@ -166,7 +167,7 @@ export function createEmptyQuestionState(slideId: string): RealtimeQuestionState
     votes: {},
     totals,
     totalVotes: 0,
-    answerId: slide.correctAnswer,
+    answerId: slide.kind === "quiz" ? slide.correctAnswer : "",
     updatedAt: Date.now(),
   };
 }

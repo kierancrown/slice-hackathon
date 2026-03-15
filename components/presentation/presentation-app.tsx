@@ -22,6 +22,7 @@ import {
   getDefaultDeck,
   getDeckIdForSlide,
   getSlideById,
+  isInteractiveSlide,
   quizSlides,
   resolveDeckAndSlide,
 } from "@/lib/presentation";
@@ -105,6 +106,7 @@ export function PresentationApp({
   const currentIndexRef = useRef(0);
   const currentDeckIdRef = useRef<DeckId>(getDefaultDeck().id);
   const autoAdvancedTimerRef = useRef<number | null>(null);
+  const autoRevealedQuestionRef = useRef<string | null>(null);
 
   const currentDeck = useMemo(
     () => getDeckById(currentDeckId) ?? getDefaultDeck(),
@@ -121,6 +123,7 @@ export function PresentationApp({
   const audienceParticipantCount =
     liveState?.participants.filter((participant) => !participant.id.startsWith("presenter-"))
       .length ?? 0;
+  const currentInteractiveSlide = isInteractiveSlide(currentSlide) ? currentSlide : null;
   const currentLiveQuestion = liveState?.questions[currentSlide.id] ?? null;
   const liveJoinUrl = liveSessionCode ? buildJoinUrl(liveSessionCode) : "";
   const remoteJoinUrl =
@@ -456,29 +459,29 @@ export function PresentationApp({
     setLiveError(null);
   };
 
-  const revealLiveQuestion = () => {
-    if (!presenterSecret || currentSlide.kind !== "quiz") {
+  const revealLiveQuestion = useCallback(() => {
+    if (!presenterSecret || !currentInteractiveSlide) {
       return;
     }
 
     sendLiveMessage({
       type: "question_reveal",
-      slideId: currentSlide.id,
+      slideId: currentInteractiveSlide.id,
       presenterSecret,
     });
-  };
+  }, [currentInteractiveSlide, presenterSecret, sendLiveMessage]);
 
-  const resetLiveQuestion = () => {
-    if (!presenterSecret || currentSlide.kind !== "quiz") {
+  const resetLiveQuestion = useCallback(() => {
+    if (!presenterSecret || !currentInteractiveSlide) {
       return;
     }
 
     sendLiveMessage({
       type: "question_reset",
-      slideId: currentSlide.id,
+      slideId: currentInteractiveSlide.id,
       presenterSecret,
     });
-  };
+  }, [currentInteractiveSlide, presenterSecret, sendLiveMessage]);
 
   const localFacilitationTimer: RealtimeFacilitationTimerState | null =
     timerStartedAt && currentSlide.id === "team-formation"
@@ -495,6 +498,33 @@ export function PresentationApp({
       ? liveState.facilitationTimer
       : localFacilitationTimer;
   const displayedElapsed = activeFacilitationTimer?.startedAt ? elapsed : 0;
+
+  useEffect(() => {
+    if (!currentLiveQuestion || !currentInteractiveSlide) {
+      autoRevealedQuestionRef.current = null;
+      return;
+    }
+
+    if (
+      currentLiveQuestion.status !== "open" ||
+      audienceParticipantCount === 0 ||
+      currentLiveQuestion.totalVotes < audienceParticipantCount
+    ) {
+      return;
+    }
+
+    const questionKey = `${currentLiveQuestion.slideId}:${currentLiveQuestion.updatedAt}`;
+    if (autoRevealedQuestionRef.current === questionKey) {
+      return;
+    }
+
+    autoRevealedQuestionRef.current = questionKey;
+    const frame = window.requestAnimationFrame(() => {
+      revealLiveQuestion();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [audienceParticipantCount, currentInteractiveSlide, currentLiveQuestion, revealLiveQuestion]);
 
   const startFacilitationTimer = () => {
     if (liveConnected && presenterSecret) {
@@ -600,7 +630,7 @@ export function PresentationApp({
       setShowLivePanelMode((current) => (current === "remote" ? null : "remote"));
     } else if (event.key.toLowerCase() === "v") {
       event.preventDefault();
-      if (liveSessionCode && currentSlide.kind === "quiz") {
+      if (liveSessionCode && currentInteractiveSlide) {
         revealLiveQuestion();
       } else if (currentSlide.kind === "quiz") {
         handleQuizReveal(currentSlide.id);
@@ -712,21 +742,21 @@ export function PresentationApp({
               >
                 Remote QR
               </button>
-              {liveSessionCode && currentSlide.kind === "quiz" ? (
+              {liveSessionCode && currentInteractiveSlide ? (
                 <>
                   <button
                     type="button"
                     onClick={revealLiveQuestion}
                     className="border border-current px-3 py-2 transition hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
                   >
-                    Reveal live
+                    {currentInteractiveSlide.kind === "vote" ? "Reveal winner" : "Reveal live"}
                   </button>
                   <button
                     type="button"
                     onClick={resetLiveQuestion}
                     className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
                   >
-                    Reset live
+                    {currentInteractiveSlide.kind === "vote" ? "Reset vote" : "Reset live"}
                   </button>
                 </>
               ) : null}

@@ -4,9 +4,9 @@ import Image from "next/image";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { QuizSlide, Slide } from "@/components/presentation/types";
+import type { InteractiveSlide, Slide } from "@/components/presentation/types";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
-import { getSlideById, isQuizSlide } from "@/lib/presentation";
+import { getSlideById, isInteractiveSlide } from "@/lib/presentation";
 import {
   createPartySocket,
   getOrCreateStoredValue,
@@ -71,7 +71,7 @@ function getSlideOverview(slide: Slide) {
     case "vote":
       return {
         intro: slide.intro,
-        detail: slide.voting.prompt,
+        detail: slide.voting.options.map((option) => option.label).join(" / "),
       };
     default:
       return {
@@ -118,12 +118,14 @@ function QuestionCard({
   selectedId,
   onVote,
 }: {
-  slide: QuizSlide;
+  slide: InteractiveSlide;
   question: RealtimeQuestionState;
   selectedId: string | null;
   onVote: (optionId: string) => void;
 }) {
   const revealed = question.status === "revealed";
+  const options = slide.kind === "quiz" ? slide.answers : slide.voting.options;
+  const isVoteSlide = slide.kind === "vote";
 
   return (
     <div className="space-y-4">
@@ -134,14 +136,18 @@ function QuestionCard({
         <h1 className="mt-3 font-display text-5xl uppercase leading-[0.88] tracking-[-0.05em]">
           {slide.title}
         </h1>
-        <p className="mt-4 text-lg leading-snug text-current/80">{slide.prompt}</p>
+        <p className="mt-4 text-lg leading-snug text-current/80">
+          {slide.kind === "quiz" ? slide.prompt : slide.voting.prompt}
+        </p>
       </div>
 
       <div className="space-y-3">
-        {slide.answers.map((option) => {
+        {options.map((option) => {
           const votes = question.totals[option.id] ?? 0;
-          const isCorrect = option.id === slide.correctAnswer;
+          const isCorrect = slide.kind === "quiz" ? option.id === slide.correctAnswer : false;
           const isSelected = selectedId === option.id;
+          const optionDetail =
+            slide.kind === "vote" ? (option as { detail?: string }).detail : undefined;
 
           return (
             <button
@@ -167,6 +173,11 @@ function QuestionCard({
                     {option.id}
                   </p>
                   <p className="mt-2 text-base leading-snug">{option.label}</p>
+                  {optionDetail ? (
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] opacity-60">
+                      {optionDetail}
+                    </p>
+                  ) : null}
                 </div>
                 {revealed ? (
                   <p className="text-xs font-semibold uppercase tracking-[0.22em]">
@@ -181,14 +192,20 @@ function QuestionCard({
 
       <div className="rounded-[1.4rem] border border-current/18 bg-black px-4 py-4 text-[#d6ff35]">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-          {revealed ? "Results" : "Vote status"}
+          {revealed ? "Results" : isVoteSlide ? "Ballot status" : "Vote status"}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-[#d6ff35]/82">
           {revealed
-            ? slide.explanation
+            ? slide.kind === "quiz"
+              ? slide.explanation
+              : "Voting is closed. The winning team is now on screen."
             : selectedId
-              ? "Your vote is in. You can change it until the presenter reveals the answer."
-              : "Choose one answer. Your phone will stay in sync as the presenter moves on."}
+              ? isVoteSlide
+                ? "Your vote is in. You can change it until the presenter reveals the winner."
+                : "Your vote is in. You can change it until the presenter reveals the answer."
+              : isVoteSlide
+                ? "Vote for one team. Your phone will stay in sync as the presenter moves on."
+                : "Choose one answer. Your phone will stay in sync as the presenter moves on."}
         </p>
       </div>
     </div>
@@ -345,12 +362,14 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
   };
 
   const currentSlide = getSlideById(sessionState?.currentSlideId ?? null);
-  const currentQuiz = isQuizSlide(currentSlide) ? currentSlide : null;
+  const currentInteractiveSlide = isInteractiveSlide(currentSlide) ? currentSlide : null;
   const audienceParticipantCount =
     sessionState?.participants.filter((participant) => !participant.id.startsWith("presenter-"))
       .length ?? 0;
   const currentQuestion =
-    currentQuiz && sessionState ? sessionState.questions[currentQuiz.id] ?? null : null;
+    currentInteractiveSlide && sessionState
+      ? sessionState.questions[currentInteractiveSlide.id] ?? null
+      : null;
   const selectedId =
     currentQuestion && participantId ? currentQuestion.votes[participantId] ?? null : null;
   const revealKey = currentQuestion
@@ -366,7 +385,7 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
   }, [selectedId]);
 
   useEffect(() => {
-    if (!currentQuiz || !currentQuestion) {
+    if (!currentInteractiveSlide || !currentQuestion) {
       previousRevealStateRef.current = "";
       return;
     }
@@ -382,7 +401,9 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
       return;
     }
 
-    const isCorrect = selectedId === currentQuiz.correctAnswer;
+    const isCorrect =
+      currentInteractiveSlide.kind === "quiz" &&
+      selectedId === currentInteractiveSlide.correctAnswer;
     if (isCorrect) {
       confettiRef.current?.fire({
         particleCount: 120,
@@ -392,17 +413,17 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
         colors: ["#d6ff35", "#111111", "#c8f12e"],
       });
     }
-  }, [currentQuestion, currentQuiz, revealKey, selectedId]);
+  }, [currentInteractiveSlide, currentQuestion, revealKey, selectedId]);
 
   const submitVote = (optionId: string) => {
-    if (!currentQuiz || !participantId) {
+    if (!currentInteractiveSlide || !participantId) {
       return;
     }
 
     socketRef.current?.send(
       JSON.stringify({
         type: "vote_submit",
-        slideId: currentQuiz.id,
+        slideId: currentInteractiveSlide.id,
         optionId,
         participantId,
       } satisfies ClientMessage),
@@ -465,10 +486,10 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
                   Join session
                 </button>
               </form>
-            ) : currentQuiz && currentQuestion ? (
+            ) : currentInteractiveSlide && currentQuestion ? (
               <div className="mt-6">
                 <QuestionCard
-                  slide={currentQuiz}
+                  slide={currentInteractiveSlide}
                   question={currentQuestion}
                   selectedId={selectedId}
                   onVote={submitVote}

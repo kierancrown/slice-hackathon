@@ -238,7 +238,7 @@ export default class SessionRoom {
     this.state.currentSlideId = slide.id;
     this.state.updatedAt = Date.now();
 
-    if (slide.kind === "quiz") {
+    if (slide.kind === "quiz" || slide.kind === "vote") {
       const currentQuestion = this.state.questions[slide.id] ?? createEmptyQuestionState(slide.id);
       if (currentQuestion) {
         this.state.questions[slide.id] = {

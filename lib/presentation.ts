@@ -1,4 +1,12 @@
-import type { Deck, DeckId, QuizSlide, Slide, SlideRef } from "@/components/presentation/types";
+import type {
+  Deck,
+  DeckId,
+  InteractiveSlide,
+  QuizSlide,
+  Slide,
+  SlideRef,
+  VotingSlide,
+} from "@/components/presentation/types";
 import { slideDecks } from "@/data/slides";
 
 export const decks = slideDecks.decks;
@@ -6,6 +14,13 @@ export const decksById = new Map(decks.map((deck) => [deck.id, deck] as const));
 export const allSlides = decks.flatMap((deck) => deck.slides);
 export const quizSlides = allSlides.filter((slide): slide is QuizSlide => slide.kind === "quiz");
 export const quizSlidesById = new Map(quizSlides.map((slide) => [slide.id, slide] as const));
+export const voteSlides = allSlides.filter((slide): slide is VotingSlide => slide.kind === "vote");
+export const interactiveSlides = allSlides.filter(
+  (slide): slide is InteractiveSlide => slide.kind === "quiz" || slide.kind === "vote",
+);
+export const interactiveSlidesById = new Map(
+  interactiveSlides.map((slide) => [slide.id, slide] as const),
+);
 
 export function getDefaultDeck(): Deck {
   return decks[0];
@@ -100,4 +115,12 @@ export function resolveDeckAndSlide(
 
 export function isQuizSlide(slide: Slide | null | undefined): slide is QuizSlide {
   return Boolean(slide && slide.kind === "quiz");
+}
+
+export function isVoteSlide(slide: Slide | null | undefined): slide is VotingSlide {
+  return Boolean(slide && slide.kind === "vote");
+}
+
+export function isInteractiveSlide(slide: Slide | null | undefined): slide is InteractiveSlide {
+  return Boolean(slide && (slide.kind === "quiz" || slide.kind === "vote"));
 }
