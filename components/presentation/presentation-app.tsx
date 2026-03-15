@@ -351,8 +351,9 @@ export function PresentationApp({
         if (message.type === "session_state") {
           setLiveState(message.state);
           setLiveError(null);
-          const nextDeckId = getDeckIdForSlide(message.state.currentSlideId);
-          const nextSlide = getSlideById(message.state.currentSlideId, nextDeckId);
+        } else if (message.type === "slide_changed") {
+          const nextDeckId = getDeckIdForSlide(message.slideId);
+          const nextSlide = getSlideById(message.slideId, nextDeckId);
           if (!nextDeckId || !nextSlide) {
             return;
           }

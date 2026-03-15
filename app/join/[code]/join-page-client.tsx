@@ -108,14 +108,6 @@ function FollowAlongCard({ slide }: { slide: Slide }) {
           <p className="mt-2 text-sm leading-relaxed text-[#d6ff35]/84">{overview.detail}</p>
         </div>
       ) : null}
-      {slide.speakerNotes ? (
-        <div className="mt-5 rounded-[1rem] border border-[#d6ff35]/14 bg-white/6 px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/58">
-            Notes
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-[#d6ff35]/82">{slide.speakerNotes}</p>
-        </div>
-      ) : null}
     </div>
   );
 }

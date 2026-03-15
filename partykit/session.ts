@@ -253,6 +253,11 @@ export default class SessionRoom {
     }
 
     this.persistAndBroadcast();
+    this.broadcast({
+      type: "slide_changed",
+      slideId: this.state.currentSlideId,
+      activeQuestionSlideId: this.state.activeQuestionSlideId,
+    });
   }
 
   handleVoteSubmit(
@@ -386,6 +391,11 @@ export default class SessionRoom {
       this.state.presenterSecret,
     );
     this.persistAndBroadcast();
+    this.broadcast({
+      type: "slide_changed",
+      slideId: this.state.currentSlideId,
+      activeQuestionSlideId: this.state.activeQuestionSlideId,
+    });
   }
 
   handleDisplayModeSet(
