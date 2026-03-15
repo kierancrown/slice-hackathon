@@ -141,7 +141,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
   }, []);
 
   useEffect(() => {
-    if (sessionState?.facilitationTimer.status !== "running") {
+    if (sessionState?.facilitationTimer?.status !== "running") {
       return;
     }
 
@@ -150,7 +150,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [sessionState?.facilitationTimer.startedAt, sessionState?.facilitationTimer.status]);
+  }, [sessionState?.facilitationTimer?.startedAt, sessionState?.facilitationTimer?.status]);
 
   const currentDeckId = getDeckIdForSlide(sessionState?.currentSlideId ?? null);
   const currentDeck = getDeckById(currentDeckId);
@@ -236,6 +236,13 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
   const resetIdeaTimer = () => {
     send({
       type: "timer_reset",
+      presenterSecret: token,
+    });
+  };
+
+  const resetSession = () => {
+    send({
+      type: "session_reset",
       presenterSecret: token,
     });
   };
@@ -359,6 +366,14 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
               Open build loop
             </a>
           </div>
+
+          <button
+            type="button"
+            onClick={resetSession}
+            className="mt-4 w-full rounded-[1.2rem] border border-[#d6ff35]/22 bg-[#1b1b1b] px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#d6ff35] transition hover:border-[#d6ff35] hover:bg-white/6"
+          >
+            Clear session and start fresh
+          </button>
 
           <div className="mt-5 rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
             <div className="flex items-center justify-between gap-4">

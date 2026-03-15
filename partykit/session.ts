@@ -58,6 +58,21 @@ function createInitialState(sessionCode: string, presenterSecret = ""): Realtime
   };
 }
 
+function normalizeSessionState(
+  sessionCode: string,
+  state: Partial<RealtimeSessionState>,
+): RealtimeSessionState {
+  const initial = createInitialState(sessionCode, state.presenterSecret ?? "");
+
+  return {
+    ...initial,
+    ...state,
+    facilitationTimer: state.facilitationTimer ?? initial.facilitationTimer,
+    participants: state.participants ?? initial.participants,
+    questions: state.questions ?? initial.questions,
+  };
+}
+
 export default class SessionRoom {
   room: PartyRoom;
   connections = new Map<string, ConnectionMeta>();
@@ -71,7 +86,10 @@ export default class SessionRoom {
   async onStart() {
     const stored = await this.room.storage?.get("state");
     if (isRecord(stored)) {
-      this.state = stored as RealtimeSessionState;
+      this.state = normalizeSessionState(
+        this.room.id.replace(/^session-?/i, ""),
+        stored as Partial<RealtimeSessionState>,
+      );
     }
   }
 
@@ -117,6 +135,9 @@ export default class SessionRoom {
         return;
       case "timer_reset":
         this.handleTimerReset(connection, parsed);
+        return;
+      case "session_reset":
+        this.handleSessionReset(connection, parsed);
         return;
       case "ping":
         this.send(connection, { type: "session_state", state: this.state });
@@ -343,6 +364,21 @@ export default class SessionRoom {
 
     this.state.facilitationTimer = createIdleFacilitationTimerState();
     this.state.updatedAt = Date.now();
+    this.persistAndBroadcast();
+  }
+
+  handleSessionReset(
+    connection: PartyConnection,
+    message: Extract<ClientMessage, { type: "session_reset" }>,
+  ) {
+    if (!this.assertPresenter(connection, message.presenterSecret)) {
+      return;
+    }
+
+    this.state = createInitialState(
+      this.room.id.replace(/^session-?/i, ""),
+      this.state.presenterSecret,
+    );
     this.persistAndBroadcast();
   }
 

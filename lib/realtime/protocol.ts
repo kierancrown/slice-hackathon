@@ -86,6 +86,11 @@ export type TimerResetMessage = {
   presenterSecret: string;
 };
 
+export type SessionResetMessage = {
+  type: "session_reset";
+  presenterSecret: string;
+};
+
 export type PingMessage = {
   type: "ping";
 };
@@ -99,6 +104,7 @@ export type ClientMessage =
   | QuestionResetMessage
   | TimerStartMessage
   | TimerResetMessage
+  | SessionResetMessage
   | PingMessage;
 
 export type SessionStateMessage = {

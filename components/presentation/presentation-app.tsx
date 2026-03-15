@@ -111,7 +111,7 @@ export function PresentationApp({
   const currentSlides = currentDeck.slides;
   const currentSlide = currentSlides[currentIndex] ?? currentSlides[0];
   const isDarkSlide = currentSlide.theme === "ink" || currentSlide.theme === "pink";
-  const timerSourceStartedAt = liveState?.facilitationTimer.startedAt ?? timerStartedAt;
+  const timerSourceStartedAt = liveState?.facilitationTimer?.startedAt ?? timerStartedAt;
   const answeredQuizCount = quizSlides.filter((slide) => quizProgress[slide.id]?.revealed).length;
   const score = quizSlides.filter((slide) => {
     const state = quizProgress[slide.id];
@@ -221,7 +221,7 @@ export function PresentationApp({
       return;
     }
 
-    if (!liveState?.facilitationTimer.startedAt) {
+    if (!liveState?.facilitationTimer?.startedAt) {
       window.localStorage.setItem(TIMER_KEY, String(timerSourceStartedAt));
     }
 
@@ -236,7 +236,7 @@ export function PresentationApp({
       window.cancelAnimationFrame(frame);
       window.clearInterval(interval);
     };
-  }, [liveState?.facilitationTimer.startedAt, timerSourceStartedAt]);
+  }, [liveState?.facilitationTimer?.startedAt, timerSourceStartedAt]);
 
   useEffect(() => {
     if (showJumpPalette) {
