@@ -283,6 +283,17 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
         const message = JSON.parse(event.data) as ServerMessage;
         if (message.type === "session_state") {
           setSessionState(message.state);
+        } else if (message.type === "slide_changed") {
+          setSessionState((current) =>
+            current
+              ? {
+                  ...current,
+                  currentSlideId: message.slideId,
+                  activeQuestionSlideId: message.activeQuestionSlideId,
+                  updatedAt: Date.now(),
+                }
+              : current,
+          );
         } else if (message.type === "error") {
           setError(message.message);
         }

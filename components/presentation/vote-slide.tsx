@@ -12,6 +12,7 @@ type VoteSlideProps = {
   isDark: boolean;
   liveQuestion: RealtimeQuestionState | null;
   participantCount: number;
+  countdownSecondsRemaining: number | null;
 };
 
 export function VoteSlide({
@@ -21,6 +22,7 @@ export function VoteSlide({
   isDark,
   liveQuestion,
   participantCount,
+  countdownSecondsRemaining,
 }: VoteSlideProps) {
   const mutedTextClass = isDark ? "text-[#d6ff35]/68" : "text-black/65";
   const lineClass = isDark ? "bg-[#d6ff35]/30" : "bg-black/30";
@@ -102,6 +104,30 @@ export function VoteSlide({
           </div>
         </div>
       </motion.div>
+      <motion.div
+        initial={false}
+        animate={{
+          opacity: countdownSecondsRemaining ? 1 : 0,
+          scale: countdownSecondsRemaining ? 1 : 0.98,
+          pointerEvents: "none",
+        }}
+        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+        className={`absolute inset-0 z-30 flex items-center justify-center ${
+          isDark ? "bg-black/76 text-[#d6ff35]" : "bg-[#d6ff35]/82 text-black"
+        }`}
+      >
+        <div className="text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] opacity-70">
+            All votes in
+          </p>
+          <p className="mt-4 font-display text-[7rem] uppercase leading-none tracking-[-0.08em] md:text-[9rem] lg:text-[11rem]">
+            {countdownSecondsRemaining ?? ""}
+          </p>
+          <p className="mt-4 text-2xl uppercase tracking-[0.18em] opacity-82 md:text-3xl">
+            Revealing winner
+          </p>
+        </div>
+      </motion.div>
 
       <div className="flex flex-col justify-between gap-8">
         <div className="space-y-6">
@@ -154,7 +180,9 @@ export function VoteSlide({
             {revealed
               ? "Winner is on screen."
               : votingOpen
-                ? "Phones are live. Once everyone has voted, the winning team reveals automatically."
+                ? countdownSecondsRemaining
+                  ? "Everyone is in. Quick pause for final vote changes before reveal."
+                  : "Phones are live. Once everyone has voted, the winning team reveals automatically."
                 : slide.voting.prompt}
           </p>
         </div>

@@ -99,6 +99,11 @@ export function PresentationApp({
   const [liveState, setLiveState] = useState<RealtimeSessionState | null>(null);
   const [liveConnected, setLiveConnected] = useState(false);
   const [liveError, setLiveError] = useState<string | null>(null);
+  const [pendingAutoReveal, setPendingAutoReveal] = useState<{
+    slideId: string;
+    revealAt: number;
+  } | null>(null);
+  const [autoRevealNow, setAutoRevealNow] = useState(() => Date.now());
 
   const jumpInputRef = useRef<HTMLInputElement>(null);
   const hasBootstrappedRef = useRef(false);
@@ -129,6 +134,10 @@ export function PresentationApp({
   const remoteJoinUrl =
     liveSessionCode && presenterSecret ? buildRemoteUrl(liveSessionCode, presenterSecret) : "";
   const isBuildLoopMode = liveState?.displayMode === "build-loop";
+  const countdownSecondsRemaining =
+    pendingAutoReveal?.slideId === currentSlide.id
+      ? Math.max(0, Math.ceil((pendingAutoReveal.revealAt - autoRevealNow) / 1000))
+      : null;
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -501,8 +510,11 @@ export function PresentationApp({
 
   useEffect(() => {
     if (!currentLiveQuestion || !currentInteractiveSlide) {
+      const frame = window.requestAnimationFrame(() => {
+        setPendingAutoReveal(null);
+      });
       autoRevealedQuestionRef.current = null;
-      return;
+      return () => window.cancelAnimationFrame(frame);
     }
 
     if (
@@ -510,21 +522,80 @@ export function PresentationApp({
       audienceParticipantCount === 0 ||
       currentLiveQuestion.totalVotes < audienceParticipantCount
     ) {
-      return;
+      const frame = window.requestAnimationFrame(() => {
+        setPendingAutoReveal(null);
+      });
+      autoRevealedQuestionRef.current = null;
+      return () => window.cancelAnimationFrame(frame);
     }
 
-    const questionKey = `${currentLiveQuestion.slideId}:${currentLiveQuestion.updatedAt}`;
+    const questionKey = `${currentLiveQuestion.slideId}:${audienceParticipantCount}`;
     if (autoRevealedQuestionRef.current === questionKey) {
       return;
     }
 
-    autoRevealedQuestionRef.current = questionKey;
     const frame = window.requestAnimationFrame(() => {
-      revealLiveQuestion();
+      setAutoRevealNow(Date.now());
+      setPendingAutoReveal((current) => {
+        if (current?.slideId === currentLiveQuestion.slideId) {
+          return current;
+        }
+
+        return {
+          slideId: currentLiveQuestion.slideId,
+          revealAt: Date.now() + 5000,
+        };
+      });
     });
 
     return () => window.cancelAnimationFrame(frame);
   }, [audienceParticipantCount, currentInteractiveSlide, currentLiveQuestion, revealLiveQuestion]);
+
+  useEffect(() => {
+    if (!pendingAutoReveal) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setAutoRevealNow(Date.now());
+    }, 200);
+
+    return () => window.clearInterval(interval);
+  }, [pendingAutoReveal]);
+
+  useEffect(() => {
+    if (!pendingAutoReveal || !currentInteractiveSlide || !currentLiveQuestion) {
+      return;
+    }
+
+    if (
+      pendingAutoReveal.slideId !== currentInteractiveSlide.id ||
+      currentLiveQuestion.status !== "open"
+    ) {
+      const frame = window.requestAnimationFrame(() => {
+        setPendingAutoReveal(null);
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    if (Date.now() < pendingAutoReveal.revealAt) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      autoRevealedQuestionRef.current = `${currentLiveQuestion.slideId}:${audienceParticipantCount}`;
+      setPendingAutoReveal(null);
+      revealLiveQuestion();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    audienceParticipantCount,
+    currentInteractiveSlide,
+    currentLiveQuestion,
+    pendingAutoReveal,
+    revealLiveQuestion,
+  ]);
 
   const startFacilitationTimer = () => {
     if (liveConnected && presenterSecret) {
@@ -796,6 +867,7 @@ export function PresentationApp({
                     facilitationTimer={activeFacilitationTimer}
                     liveQuestion={currentLiveQuestion}
                     participantCount={audienceParticipantCount}
+                    countdownSecondsRemaining={countdownSecondsRemaining}
                     sessionCode={liveSessionCode}
                     liveConnected={liveConnected}
                     onQuizSelect={handleQuizSelect}

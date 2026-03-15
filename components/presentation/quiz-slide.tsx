@@ -14,6 +14,7 @@ type QuizSlideProps = {
   revealed: boolean;
   liveQuestion: RealtimeQuestionState | null;
   participantCount: number;
+  countdownSecondsRemaining: number | null;
   onSelect: (optionId: string) => void;
   onReveal: () => void;
 };
@@ -27,6 +28,7 @@ export function QuizSlide({
   revealed,
   liveQuestion,
   participantCount,
+  countdownSecondsRemaining,
   onSelect,
   onReveal,
 }: QuizSlideProps) {
@@ -107,6 +109,30 @@ export function QuizSlide({
           </div>
         </div>
       </motion.div>
+      <motion.div
+        initial={false}
+        animate={{
+          opacity: countdownSecondsRemaining ? 1 : 0,
+          scale: countdownSecondsRemaining ? 1 : 0.98,
+          pointerEvents: "none",
+        }}
+        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+        className={`absolute inset-0 z-30 flex items-center justify-center ${
+          isDark ? "bg-black/76 text-[#d6ff35]" : "bg-[#d6ff35]/82 text-black"
+        }`}
+      >
+        <div className="text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] opacity-70">
+            All votes in
+          </p>
+          <p className="mt-4 font-display text-[7rem] uppercase leading-none tracking-[-0.08em] md:text-[9rem] lg:text-[11rem]">
+            {countdownSecondsRemaining ?? ""}
+          </p>
+          <p className="mt-4 text-2xl uppercase tracking-[0.18em] opacity-82 md:text-3xl">
+            Revealing answer
+          </p>
+        </div>
+      </motion.div>
       <div className="flex flex-col justify-between gap-8">
         <div className="space-y-6">
           <div className={`flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] ${mutedTextClass}`}>
@@ -162,7 +188,9 @@ export function QuizSlide({
             </div>
             <p className="mt-4 text-lg leading-snug opacity-82">
               {votingOpen
-                ? "Waiting for the room to finish voting. The answer will reveal once everyone is in."
+                ? countdownSecondsRemaining
+                  ? "Everyone is in. Quick pause for last-second changes before reveal."
+                  : "Waiting for the room to finish voting. The answer will reveal once everyone is in."
                 : "Voting is closed. Reveal stats are on screen now."}
             </p>
           </div>

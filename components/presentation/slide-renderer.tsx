@@ -18,6 +18,7 @@ type SlideRendererProps = {
   facilitationTimer?: import("@/lib/realtime/protocol").RealtimeFacilitationTimerState | null;
   liveQuestion?: import("@/lib/realtime/protocol").RealtimeQuestionState | null;
   participantCount?: number;
+  countdownSecondsRemaining?: number | null;
   sessionCode?: string | null;
   liveConnected?: boolean;
   onQuizSelect: (slideId: string, optionId: string) => void;
@@ -193,6 +194,7 @@ export function SlideRenderer({
   facilitationTimer,
   liveQuestion,
   participantCount = 0,
+  countdownSecondsRemaining = null,
   sessionCode = null,
   liveConnected = false,
   onQuizSelect,
@@ -248,6 +250,7 @@ export function SlideRenderer({
         revealed={quizState?.revealed ?? false}
         liveQuestion={liveQuestion ?? null}
         participantCount={participantCount}
+        countdownSecondsRemaining={countdownSecondsRemaining}
         onSelect={(optionId) => onQuizSelect(slide.id, optionId)}
         onReveal={() => onQuizReveal(slide.id)}
       />
@@ -263,6 +266,7 @@ export function SlideRenderer({
         isDark={isDark}
         liveQuestion={liveQuestion ?? null}
         participantCount={participantCount}
+        countdownSecondsRemaining={countdownSecondsRemaining}
       />
     );
   }
