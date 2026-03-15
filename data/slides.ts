@@ -16,6 +16,7 @@ export const slideDecks: SlideDeckData = {
           subtitle: "Learn fast. Build boldly. Demo something real.",
           supportingLine: "Two days to explore how AI can help every team move faster.",
           meta: "2-day internal hackathon",
+          presenterCue: "Open with energy and frame this as practical experimentation, not perfection.",
           speakerNotes:
             "Open with energy. Emphasize that this is about practical experimentation and better AI literacy across the company, not perfection.",
         },
@@ -32,6 +33,7 @@ export const slideDecks: SlideDeckData = {
           ],
           callout: "Learning how to work with AI matters more than a perfect prototype.",
           sideLabel: "Literacy > theatre",
+          presenterCue: "Make this inclusive: the goal is confidence and good judgment across every team.",
           speakerNotes: "Use this to make the event feel inclusive and practical.",
         },
         {
@@ -53,6 +55,7 @@ export const slideDecks: SlideDeckData = {
               examples: ["onboarding docs", "policy drafting", "internal comms"],
             },
           ],
+          presenterCue: "Keep it brisk and visual. Everyone in the room has a role here.",
           speakerNotes:
             "Keep this fast and visual. The point is that everyone in the room has a role.",
         },
@@ -69,6 +72,7 @@ export const slideDecks: SlideDeckData = {
             "Smart teams switch tools based on the task",
           ],
           footer: "Use the right tool for the job, not the same tool for everything.",
+          presenterCue: "Mention Antigravity, but position it as one tool in a wider workflow.",
           speakerNotes:
             "Keep this practical. Mention Antigravity, but not as the only focus.",
         },
@@ -86,6 +90,7 @@ export const slideDecks: SlideDeckData = {
             "Build enough to demo",
             "Present on Day 2",
           ],
+          presenterCue: "This is the handoff from teaching into action. Stress tight scope and momentum.",
           speakerNotes:
             "This is the practical handoff from teaching into action.",
         },
@@ -108,6 +113,7 @@ export const slideDecks: SlideDeckData = {
             "We will regroup before teams commit so we are not all building the same thing.",
           timerLabel: "Idea sprint",
           timerMinutes: 15,
+          presenterCue: "Set the timer, get them moving, and ask for 2-3 ideas before regrouping.",
           speakerNotes:
             "This slide should support a rotating example loop and ideally a visible timer.",
         },
@@ -144,6 +150,7 @@ export const slideDecks: SlideDeckData = {
           ],
           callout: "Clarity beats complexity.",
           sideLabel: "Day 2",
+          presenterCue: "Refocus the room on clarity and demo quality, not adding more scope.",
         },
         {
           id: "demo-expectations",
@@ -158,6 +165,7 @@ export const slideDecks: SlideDeckData = {
             "What still needed human judgment?",
             "What would you do next?",
           ],
+          presenterCue: "Remind teams that honest, simple demos score better than overclaiming.",
         },
         {
           id: "quiz-reset",
@@ -172,6 +180,7 @@ export const slideDecks: SlideDeckData = {
           ],
           callout: "Keep it light. This is a recap, not an exam.",
           sideLabel: "Quiz round",
+          presenterCue: "Use this as a quick re-energizer before voting and presentations.",
           speakerNotes: "Use this to re-energize the room before demos begin.",
         },
         {
@@ -286,6 +295,7 @@ export const slideDecks: SlideDeckData = {
             "Do not vote for your own team",
           ],
           footer: "Later we can wire this into the app, just like the quiz.",
+          presenterCue: "Keep voting criteria simple and remind people not to vote for their own team.",
           voting: {
             status: "coming-soon",
             prompt: "Future upgrade: turn this into a live vote capture and reveal flow.",

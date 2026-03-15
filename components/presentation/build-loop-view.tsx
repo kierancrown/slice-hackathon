@@ -18,6 +18,9 @@ export function BuildLoopView() {
   }, []);
 
   const activeSection = buildLoopSections[activeIndex];
+  const visibleSections = Array.from({ length: 4 }, (_, offset) => {
+    return buildLoopSections[(activeIndex + offset) % buildLoopSections.length];
+  });
 
   return (
     <main className="grid min-h-screen place-items-center overflow-hidden bg-[#d6ff35] px-6 py-6 text-black md:px-8 md:py-8">
@@ -35,10 +38,10 @@ export function BuildLoopView() {
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-black/56">
                 Slice Mobile / Build Loop
               </p>
-              <h1 className="mt-5 font-display text-[4.5rem] uppercase leading-[0.88] tracking-[-0.06em] md:text-[7rem] lg:text-[8.5rem]">
+              <h1 className="mt-4 font-display text-[4rem] uppercase leading-[0.88] tracking-[-0.06em] md:text-[5.4rem] lg:text-[6.4rem]">
                 Keep building.
               </h1>
-              <p className="mt-4 max-w-3xl text-2xl leading-[1.08] text-black/78 md:text-3xl">
+              <p className="mt-3 max-w-3xl text-xl leading-[1.08] text-black/78 md:text-[1.8rem]">
                 Use the time well. Tight scope, clear story, better judgment.
               </p>
             </div>
@@ -53,7 +56,7 @@ export function BuildLoopView() {
             </div>
           </header>
 
-          <div className="mt-10 grid flex-1 gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="mt-6 grid flex-1 gap-6 lg:grid-cols-[1.02fr_0.98fr]">
             <AnimatePresence mode="wait">
               <motion.section
                 key={activeSection.title}
@@ -61,27 +64,28 @@ export function BuildLoopView() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -28 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="rounded-[2rem] border-2 border-black bg-black px-7 py-7 text-[#d6ff35] shadow-[16px_16px_0_rgba(0,0,0,0.12)]"
+                className="rounded-[2rem] border-2 border-black bg-black px-6 py-6 text-[#d6ff35] shadow-[16px_16px_0_rgba(0,0,0,0.12)]"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d6ff35]/56">
                   {activeSection.label}
                 </p>
-                <h2 className="mt-6 font-display text-5xl uppercase leading-[0.9] tracking-[-0.05em] md:text-7xl">
+                <h2 className="mt-5 font-display text-4xl uppercase leading-[0.92] tracking-[-0.05em] md:text-5xl lg:text-6xl">
                   {activeSection.title}
                 </h2>
-                <p className="mt-6 max-w-3xl text-2xl leading-[1.1] text-[#d6ff35]/82 md:text-3xl">
+                <p className="mt-5 max-w-3xl text-xl leading-[1.08] text-[#d6ff35]/82 md:text-2xl">
                   {activeSection.body}
                 </p>
               </motion.section>
             </AnimatePresence>
 
             <div className="grid gap-4">
-              {buildLoopSections.map((section, index) => {
-                const active = index === activeIndex;
+              {visibleSections.map((section, index) => {
+                const realIndex = (activeIndex + index) % buildLoopSections.length;
+                const active = index === 0;
 
                 return (
                   <div
-                    key={section.title}
+                    key={`${realIndex}-${section.title}`}
                     className={`rounded-[1.6rem] border-2 px-5 py-5 transition ${
                       active
                         ? "border-black bg-black text-[#d6ff35] shadow-[10px_10px_0_rgba(0,0,0,0.12)]"
@@ -93,12 +97,12 @@ export function BuildLoopView() {
                         <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-56">
                           {section.label}
                         </p>
-                        <p className="mt-3 font-display text-2xl uppercase leading-[0.95] tracking-[-0.04em] md:text-3xl">
+                        <p className="mt-2 font-display text-xl uppercase leading-[0.95] tracking-[-0.04em] md:text-[1.7rem]">
                           {section.title}
                         </p>
                       </div>
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-56">
-                        {String(index + 1).padStart(2, "0")}
+                        {String(realIndex + 1).padStart(2, "0")}
                       </p>
                     </div>
                   </div>

@@ -450,14 +450,14 @@ export function SlideRenderer({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex h-full flex-col gap-8"
+        className="flex h-full flex-col gap-6"
       >
         <div className="flex items-start justify-between gap-6">
           <div className="space-y-4">
             <motion.p variants={itemVariants} className={metaTextClass}>
               {slide.eyebrow}
             </motion.p>
-            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[5.8rem]`}>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-5xl md:text-6xl lg:text-[5.2rem]`}>
               {slide.title}
             </motion.h2>
           </div>
@@ -465,27 +465,30 @@ export function SlideRenderer({
             <StepBadge value={String(index + 1).padStart(2, "0")} />
           </motion.div>
         </div>
-        <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
+        <motion.p variants={itemVariants} className="max-w-4xl text-lg leading-[1.08] md:text-[1.65rem]">
           {slide.intro}
         </motion.p>
-        <div className="grid flex-1 gap-4 lg:grid-cols-[0.7fr_1.3fr]">
-          <motion.div variants={itemVariants} className={`${darkPanelClass} rounded-[2rem] p-6`}>
+        <div className="grid flex-1 gap-4 lg:grid-cols-[0.58fr_1.42fr]">
+          <motion.div variants={itemVariants} className={`${darkPanelClass} flex flex-col justify-between rounded-[2rem] p-5`}>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/62">
               Build rhythm
             </p>
-            <p className="mt-4 font-display text-5xl uppercase leading-[0.9] tracking-[-0.06em] md:text-6xl">
+            <p className="mt-4 font-display text-4xl uppercase leading-[0.9] tracking-[-0.06em] md:text-5xl">
               From kickoff to demo
             </p>
+            <p className="mt-4 text-base leading-snug text-[#d6ff35]/78 md:text-lg">
+              Keep teams moving. One clear idea, fast alignment, then enough build to show something real.
+            </p>
           </motion.div>
-          <div className="grid gap-4">
+          <div className="grid gap-3 md:grid-cols-2">
             {slide.phases.map((phase, phaseIndex) => (
-              <motion.div key={phase} variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] p-5`}>
+              <motion.div key={phase} variants={itemVariants} className={`${limePanelClass} rounded-[1.5rem] p-4`}>
                 <div className="flex items-start gap-4">
                   <StepBadge
                     value={String(phaseIndex + 1).padStart(2, "0")}
                     className="bg-black text-[#d6ff35]"
                   />
-                  <p className="pt-1 text-2xl leading-[1.04] md:text-[2rem]">{phase}</p>
+                  <p className="pt-1 text-xl leading-[1.04] md:text-[1.7rem]">{phase}</p>
                 </div>
               </motion.div>
             ))}

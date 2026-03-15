@@ -6,6 +6,7 @@ export type BaseSlide = {
   id: string;
   title: string;
   eyebrow?: string;
+  presenterCue?: string;
   speakerNotes?: string;
   theme?: SlideTheme;
 };

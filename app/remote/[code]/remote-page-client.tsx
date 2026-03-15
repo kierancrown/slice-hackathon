@@ -17,6 +17,8 @@ type RemotePageClientProps = {
   token: string;
 };
 
+type RemoteScreen = "controls" | "index" | "notes" | "session";
+
 function formatRemaining(timer: RealtimeFacilitationTimerState | null, now: number) {
   if (!timer?.startedAt || timer.status !== "running") {
     return "15:00";
@@ -34,6 +36,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [reconnectNonce, setReconnectNonce] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+  const [screen, setScreen] = useState<RemoteScreen>("controls");
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
@@ -162,6 +165,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
   const facilitationTimerLabel = formatRemaining(facilitationTimer, now);
   const facilitationTimerActive =
     facilitationTimer?.status === "running" && facilitationTimer.slideId === "team-formation";
+  const isBuildLoopMode = sessionState?.displayMode === "build-loop";
 
   const send = (message: ClientMessage) => {
     const socket = socketRef.current;
@@ -211,7 +215,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
     });
   };
 
-  const reset = () => {
+  const resetQuiz = () => {
     if (!currentQuiz) {
       return;
     }
@@ -254,9 +258,47 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
     });
   };
 
+  const showSlides = () => {
+    send({
+      type: "display_mode_set",
+      mode: "slides",
+      presenterSecret: token,
+    });
+  };
+
+  const contextualActionLabel = isBuildLoopMode
+    ? "Return to slides"
+    : currentQuiz
+      ? "Reveal answer"
+      : currentSlide?.id === "team-formation"
+        ? facilitationTimerActive
+          ? "Reset timer"
+          : "Start 15 min timer"
+        : null;
+
+  const runContextualAction = () => {
+    if (isBuildLoopMode) {
+      showSlides();
+      return;
+    }
+
+    if (currentQuiz) {
+      reveal();
+      return;
+    }
+
+    if (currentSlide?.id === "team-formation") {
+      if (facilitationTimerActive) {
+        resetIdeaTimer();
+      } else {
+        startIdeaTimer();
+      }
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#111111] px-5 py-6 text-[#d6ff35]">
-      <div className="mx-auto max-w-md space-y-6">
+      <div className="mx-auto max-w-md space-y-5">
         <div className="rounded-[2rem] border border-[#d6ff35]/18 bg-black px-5 py-5 shadow-[10px_10px_0_rgba(214,255,53,0.08)]">
           <div className="flex items-center justify-between gap-4">
             <div className="rounded-[1rem] bg-[#d6ff35] px-3 py-3">
@@ -274,198 +316,284 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
             </div>
           </div>
 
-          <div className="mt-6 rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-              Current slide
-            </p>
-            <p className="mt-3 font-display text-4xl uppercase leading-[0.9] tracking-[-0.02em]">
-              {currentSlide?.title ?? "Waiting"}
-            </p>
-            {currentSlide ? (
-              <p className="mt-3 text-sm uppercase tracking-[0.18em] text-[#d6ff35]/68">
-                {currentDeck?.title ?? "Deck"} • Slide {currentIndex + 1} of{" "}
-                {currentDeck?.slides.length ?? 0}
-              </p>
-            ) : null}
-            {error ? <p className="mt-3 text-sm text-[#d6ff35]/78">{error}</p> : null}
+          <div className="mt-5 grid grid-cols-4 gap-2">
+            {([
+              ["controls", "Controls"],
+              ["index", "Index"],
+              ["notes", "Notes"],
+              ["session", "Session"],
+            ] as Array<[RemoteScreen, string]>).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setScreen(value)}
+                className={`rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
+                  screen === value
+                    ? "border-[#d6ff35] bg-[#d6ff35] text-black"
+                    : "border-[#d6ff35]/18 bg-white/6 text-[#d6ff35]"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {currentSlide?.speakerNotes ? (
-            <div className="mt-6 rounded-[1.4rem] border border-[#d6ff35]/18 bg-[#d6ff35] px-4 py-4 text-black">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
-                Speaker notes
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-black/82">
-                {currentSlide.speakerNotes}
-              </p>
+          {error ? (
+            <div className="mt-4 rounded-[1.2rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4 text-sm leading-relaxed text-[#d6ff35]/82">
+              {error}
             </div>
           ) : null}
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => move(-1)}
-              className="rounded-[1.2rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4 text-sm font-semibold uppercase tracking-[0.22em]"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() => move(1)}
-              className="rounded-[1.2rem] border border-[#d6ff35] bg-[#d6ff35] px-4 py-4 text-sm font-semibold uppercase tracking-[0.22em] text-black"
-            >
-              Next
-            </button>
-          </div>
+          {screen === "controls" ? (
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[1.5rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                  Current {isBuildLoopMode ? "mode" : "slide"}
+                </p>
+                <p className="mt-3 font-display text-4xl uppercase leading-[0.9] tracking-[-0.02em]">
+                  {isBuildLoopMode ? "Build loop" : currentSlide?.title ?? "Waiting"}
+                </p>
+                <p className="mt-3 text-sm uppercase tracking-[0.18em] text-[#d6ff35]/68">
+                  {isBuildLoopMode
+                    ? "Projector is showing the build loop"
+                    : `${currentDeck?.title ?? "Deck"} • Slide ${currentIndex + 1} of ${currentDeck?.slides.length ?? 0}`}
+                </p>
+              </div>
 
-          {currentQuiz ? (
-            <div className="mt-6 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => move(-1)}
+                  disabled={isBuildLoopMode}
+                  className="rounded-[1.2rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-5 text-sm font-semibold uppercase tracking-[0.22em] disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(1)}
+                  disabled={isBuildLoopMode}
+                  className="rounded-[1.2rem] border border-[#d6ff35] bg-[#d6ff35] px-4 py-5 text-sm font-semibold uppercase tracking-[0.22em] text-black disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+
+              {contextualActionLabel ? (
+                <button
+                  type="button"
+                  onClick={runContextualAction}
+                  className="w-full rounded-[1.3rem] border border-[#d6ff35] bg-[#d6ff35] px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-black"
+                >
+                  {contextualActionLabel}
+                </button>
+              ) : null}
+
+              {currentQuiz ? (
+                <button
+                  type="button"
+                  onClick={resetQuiz}
+                  className="w-full rounded-[1.2rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em]"
+                >
+                  Reset question
+                </button>
+              ) : null}
+
+              {currentSlide?.id === "team-formation" ? (
+                <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#d6ff35]/55">
+                        Idea timer
+                      </p>
+                      <p className="mt-2 font-display text-3xl uppercase leading-none tracking-[-0.04em]">
+                        {facilitationTimerLabel}
+                      </p>
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d6ff35]/68">
+                      {facilitationTimerActive ? "Running" : "Ready"}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === "index" ? (
+            <div className="mt-5 space-y-4">
+              {decks.map((deck) => (
+                <div
+                  key={deck.id}
+                  className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-display text-2xl uppercase leading-none tracking-[-0.04em]">
+                        {deck.title}
+                      </p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#d6ff35]/58">
+                        {deck.id}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => jumpToSlide(deck.slides[0].id)}
+                      className="rounded-full border border-[#d6ff35]/18 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+                    >
+                      Open
+                    </button>
+                  </div>
+
+                  <div className="mt-4 grid gap-2">
+                    {deck.slides.map((slide, index) => {
+                      const active = slide.id === currentSlide?.id && !isBuildLoopMode;
+
+                      return (
+                        <button
+                          key={slide.id}
+                          type="button"
+                          onClick={() => jumpToSlide(slide.id)}
+                          className={`rounded-[1rem] border px-3 py-3 text-left transition ${
+                            active
+                              ? "border-[#d6ff35] bg-[#d6ff35] text-black"
+                              : "border-[#d6ff35]/18 bg-black/25 text-[#d6ff35]"
+                          }`}
+                        >
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-60">
+                            {String(index + 1).padStart(2, "0")}
+                          </p>
+                          <p className="mt-2 text-sm leading-snug">{slide.title}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {screen === "notes" ? (
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                  Current slide
+                </p>
+                <p className="mt-3 font-display text-3xl uppercase leading-[0.92] tracking-[-0.03em]">
+                  {currentSlide?.title ?? "Waiting"}
+                </p>
+                <p className="mt-3 text-sm uppercase tracking-[0.18em] text-[#d6ff35]/68">
+                  {currentSlide?.id ?? "No active slide"}
+                </p>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-[#d6ff35] bg-[#d6ff35] px-4 py-4 text-black">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
+                  Presenter cue
+                </p>
+                <p className="mt-3 text-lg leading-snug text-black/84">
+                  {currentSlide?.presenterCue ??
+                    "No short cue yet. Add a presenter cue when you want a fast facilitation prompt here."}
+                </p>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                  Full notes
+                </p>
+                <p className="mt-3 text-base leading-relaxed text-[#d6ff35]/84">
+                  {currentSlide?.speakerNotes ??
+                    "No speaker notes on this slide yet. Add notes here if you want the remote to be more useful during facilitation."}
+                </p>
+              </div>
+
+              {currentQuiz ? (
+                <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                    Quiz answer
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
+                    Correct answer: {currentQuiz.correctAnswer}. {currentQuiz.correctConcept}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === "session" ? (
+            <div className="mt-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => jumpToSlide("opening")}
+                  className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
+                >
+                  Start Day 1
+                </button>
+                <button
+                  type="button"
+                  onClick={() => jumpToSlide("day2-reset")}
+                  className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
+                >
+                  Start Day 2
+                </button>
+                <button
+                  type="button"
+                  onClick={() => jumpToSlide("team-formation")}
+                  className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
+                >
+                  Team formation
+                </button>
+                <button
+                  type="button"
+                  onClick={isBuildLoopMode ? showSlides : showBuildLoop}
+                  className="rounded-[1.1rem] border border-[#d6ff35] bg-[#d6ff35] px-3 py-4 text-center text-sm font-semibold uppercase tracking-[0.18em] text-black"
+                >
+                  {isBuildLoopMode ? "Back to slides" : "Show build loop"}
+                </button>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                      Idea timer
+                    </p>
+                    <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.04em]">
+                      {facilitationTimerLabel}
+                    </p>
+                  </div>
+                  <p className="text-right text-xs font-semibold uppercase tracking-[0.18em] text-[#d6ff35]/68">
+                    {facilitationTimerActive ? "Running" : "Ready"}
+                  </p>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={startIdeaTimer}
+                    className="rounded-[1.1rem] border border-[#d6ff35] bg-[#d6ff35] px-3 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-black"
+                  >
+                    Start 15 min
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetIdeaTimer}
+                    className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-3 text-sm font-semibold uppercase tracking-[0.18em]"
+                  >
+                    Reset timer
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="button"
-                onClick={reveal}
-                className="w-full rounded-[1.2rem] border border-[#d6ff35] bg-[#d6ff35] px-4 py-4 text-sm font-semibold uppercase tracking-[0.22em] text-black"
+                onClick={resetSession}
+                className="w-full rounded-[1.2rem] border border-[#d6ff35]/22 bg-[#1b1b1b] px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#d6ff35] transition hover:border-[#d6ff35] hover:bg-white/6"
               >
-                Reveal answer
-              </button>
-              <button
-                type="button"
-                onClick={reset}
-                className="w-full rounded-[1.2rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4 text-sm font-semibold uppercase tracking-[0.22em]"
-              >
-                Reset question
+                Clear session and start fresh
               </button>
             </div>
           ) : null}
         </div>
-
-        <section className="rounded-[2rem] border border-[#d6ff35]/18 bg-black px-5 py-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-            Facilitation
-          </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => jumpToSlide("opening")}
-              className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
-            >
-              Start Day 1
-            </button>
-            <button
-              type="button"
-              onClick={() => jumpToSlide("day2-reset")}
-              className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
-            >
-              Start Day 2
-            </button>
-            <button
-              type="button"
-              onClick={() => jumpToSlide("team-formation")}
-              className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
-            >
-              Team formation
-            </button>
-            <button
-              type="button"
-              onClick={showBuildLoop}
-              className="rounded-[1.1rem] border border-[#d6ff35] bg-[#d6ff35] px-3 py-4 text-center text-sm font-semibold uppercase tracking-[0.18em] text-black"
-            >
-              Show build loop
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={resetSession}
-            className="mt-4 w-full rounded-[1.2rem] border border-[#d6ff35]/22 bg-[#1b1b1b] px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#d6ff35] transition hover:border-[#d6ff35] hover:bg-white/6"
-          >
-            Clear session and start fresh
-          </button>
-
-          <div className="mt-5 rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-                  Idea timer
-                </p>
-                <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.04em]">
-                  {facilitationTimerLabel}
-                </p>
-              </div>
-              <p className="text-right text-xs font-semibold uppercase tracking-[0.18em] text-[#d6ff35]/68">
-                {facilitationTimerActive ? "Running" : "Ready"}
-              </p>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={startIdeaTimer}
-                className="rounded-[1.1rem] border border-[#d6ff35] bg-[#d6ff35] px-3 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-black"
-              >
-                Start 15 min
-              </button>
-              <button
-                type="button"
-                onClick={resetIdeaTimer}
-                className="rounded-[1.1rem] border border-[#d6ff35]/18 bg-white/6 px-3 py-3 text-sm font-semibold uppercase tracking-[0.18em]"
-              >
-                Reset timer
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[2rem] border border-[#d6ff35]/18 bg-black px-5 py-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-            Deck menu
-          </p>
-          <div className="mt-4 space-y-5">
-            {decks.map((deck) => (
-              <div key={deck.id} className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-display text-2xl uppercase leading-none tracking-[-0.04em]">
-                      {deck.title}
-                    </p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#d6ff35]/58">
-                      {deck.id}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => jumpToSlide(deck.slides[0].id)}
-                    className="rounded-full border border-[#d6ff35]/18 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
-                  >
-                    Open
-                  </button>
-                </div>
-
-                <div className="mt-4 grid gap-2">
-                  {deck.slides.map((slide, index) => {
-                    const active = slide.id === currentSlide?.id;
-
-                    return (
-                      <button
-                        key={slide.id}
-                        type="button"
-                        onClick={() => jumpToSlide(slide.id)}
-                        className={`rounded-[1rem] border px-3 py-3 text-left transition ${
-                          active
-                            ? "border-[#d6ff35] bg-[#d6ff35] text-black"
-                            : "border-[#d6ff35]/18 bg-black/25 text-[#d6ff35]"
-                        }`}
-                      >
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-60">
-                          {String(index + 1).padStart(2, "0")}
-                        </p>
-                        <p className="mt-2 text-sm leading-snug">{slide.title}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
     </main>
   );
