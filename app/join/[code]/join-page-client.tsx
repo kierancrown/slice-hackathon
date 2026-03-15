@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useWebHaptics } from "web-haptics/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -230,7 +229,6 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
   const previousRevealStateRef = useRef<string>("");
   const reconnectTimerRef = useRef<number | null>(null);
   const normalizedCode = useMemo(() => code.toUpperCase(), [code]);
-  const { trigger } = useWebHaptics();
 
   useEffect(() => {
     if (!participantId || !name) {
@@ -373,8 +371,7 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
     }
 
     previousSelectedIdRef.current = selectedId;
-    trigger();
-  }, [selectedId, trigger]);
+  }, [selectedId]);
 
   useEffect(() => {
     if (!currentQuiz || !currentQuestion) {
@@ -395,10 +392,6 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
 
     const isCorrect = selectedId === currentQuiz.correctAnswer;
     if (isCorrect) {
-      trigger([
-        { duration: 30 },
-        { delay: 60, duration: 40, intensity: 1 },
-      ]);
       confettiRef.current?.fire({
         particleCount: 120,
         spread: 80,
@@ -406,13 +399,8 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
         origin: { x: 0.5, y: 0.55 },
         colors: ["#d6ff35", "#111111", "#c8f12e"],
       });
-    } else {
-      trigger([
-        { duration: 45, intensity: 1 },
-        { delay: 50, duration: 25, intensity: 0.65 },
-      ]);
     }
-  }, [currentQuestion, currentQuiz, revealKey, selectedId, trigger]);
+  }, [currentQuestion, currentQuiz, revealKey, selectedId]);
 
   const submitVote = (optionId: string) => {
     if (!currentQuiz || !participantId) {

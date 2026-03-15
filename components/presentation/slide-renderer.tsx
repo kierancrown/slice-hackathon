@@ -348,12 +348,6 @@ export function SlideRenderer({
         </div>
 
         <div className="flex flex-col justify-between gap-6">
-          <motion.div variants={itemVariants} className="flex justify-end">
-            <div className="inline-flex items-center gap-3 rounded-full border-2 border-black/85 bg-white/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-current/80">
-              <span>{slide.sideLabel ?? "Slice AI"}</span>
-              <span>{index + 1}/{total}</span>
-            </div>
-          </motion.div>
           {showJoinPanel ? (
             <motion.div variants={itemVariants} className={`${limePanelClass} rounded-[1.7rem] p-5`}>
               <div className="flex items-start justify-between gap-4">

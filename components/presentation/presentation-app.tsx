@@ -104,6 +104,7 @@ export function PresentationApp({
   const liveSocketRef = useRef<WebSocket | null>(null);
   const currentIndexRef = useRef(0);
   const currentDeckIdRef = useRef<DeckId>(getDefaultDeck().id);
+  const autoAdvancedTimerRef = useRef<number | null>(null);
 
   const currentDeck = useMemo(
     () => getDeckById(currentDeckId) ?? getDefaultDeck(),
@@ -111,7 +112,6 @@ export function PresentationApp({
   );
   const currentSlides = currentDeck.slides;
   const currentSlide = currentSlides[currentIndex] ?? currentSlides[0];
-  const isDarkSlide = currentSlide.theme === "ink" || currentSlide.theme === "pink";
   const timerSourceStartedAt = liveState?.facilitationTimer?.startedAt ?? timerStartedAt;
   const answeredQuizCount = quizSlides.filter((slide) => quizProgress[slide.id]?.revealed).length;
   const score = quizSlides.filter((slide) => {
@@ -521,6 +521,31 @@ export function PresentationApp({
     setTimerStartedAt(null);
   };
 
+  useEffect(() => {
+    const timerStartedAt = activeFacilitationTimer?.startedAt ?? null;
+    const timerDurationMs = activeFacilitationTimer?.durationMs ?? Number.POSITIVE_INFINITY;
+
+    if (!timerStartedAt) {
+      autoAdvancedTimerRef.current = null;
+      return;
+    }
+
+    if (
+      currentSlide.id !== "team-formation" ||
+      elapsed < timerDurationMs ||
+      autoAdvancedTimerRef.current === timerStartedAt
+    ) {
+      return;
+    }
+
+    autoAdvancedTimerRef.current = timerStartedAt;
+    const frame = window.requestAnimationFrame(() => {
+      stepSlide(1);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeFacilitationTimer, currentSlide.id, elapsed, stepSlide]);
+
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     const target = event.target as HTMLElement | null;
     const isInputTarget =
@@ -748,15 +773,7 @@ export function PresentationApp({
                 </div>
 
                 <div className="mt-4 flex items-end justify-between gap-6 pt-3">
-                  <div className="flex items-center rounded-full border border-current/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
-                    <Image
-                      src="/branding/slice-logo.svg"
-                      alt="Slice"
-                      width={84}
-                      height={28}
-                      className={`h-4 w-auto ${isDarkSlide ? "brightness-0 invert" : ""}`}
-                    />
-                  </div>
+                  <div />
 
                   <div className="flex min-w-56 flex-col items-end gap-3">
                     <div className="text-right text-xs font-semibold uppercase tracking-[0.24em] text-current/62">

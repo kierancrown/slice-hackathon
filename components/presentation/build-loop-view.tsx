@@ -12,7 +12,7 @@ export function BuildLoopView() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % buildLoopSections.length);
-    }, 6500);
+    }, 11000);
 
     return () => window.clearInterval(interval);
   }, []);
