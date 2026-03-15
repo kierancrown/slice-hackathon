@@ -35,6 +35,7 @@ import {
 } from "@/lib/realtime/client";
 import type {
   ClientMessage,
+  RealtimeFacilitationTimerState,
   RealtimeSessionState,
   ServerMessage,
 } from "@/lib/realtime/protocol";
@@ -110,6 +111,7 @@ export function PresentationApp({
   const currentSlides = currentDeck.slides;
   const currentSlide = currentSlides[currentIndex] ?? currentSlides[0];
   const isDarkSlide = currentSlide.theme === "ink" || currentSlide.theme === "pink";
+  const timerSourceStartedAt = liveState?.facilitationTimer.startedAt ?? timerStartedAt;
   const answeredQuizCount = quizSlides.filter((slide) => quizProgress[slide.id]?.revealed).length;
   const score = quizSlides.filter((slide) => {
     const state = quizProgress[slide.id];
@@ -214,14 +216,17 @@ export function PresentationApp({
   }, [quizProgress]);
 
   useEffect(() => {
-    if (!timerStartedAt) {
+    if (!timerSourceStartedAt) {
       window.localStorage.removeItem(TIMER_KEY);
       return;
     }
 
-    window.localStorage.setItem(TIMER_KEY, String(timerStartedAt));
+    if (!liveState?.facilitationTimer.startedAt) {
+      window.localStorage.setItem(TIMER_KEY, String(timerSourceStartedAt));
+    }
+
     const updateElapsed = () => {
-      setElapsed(Date.now() - timerStartedAt);
+      setElapsed(Date.now() - timerSourceStartedAt);
     };
 
     const frame = window.requestAnimationFrame(updateElapsed);
@@ -231,7 +236,7 @@ export function PresentationApp({
       window.cancelAnimationFrame(frame);
       window.clearInterval(interval);
     };
-  }, [timerStartedAt]);
+  }, [liveState?.facilitationTimer.startedAt, timerSourceStartedAt]);
 
   useEffect(() => {
     if (showJumpPalette) {
@@ -481,7 +486,47 @@ export function PresentationApp({
     });
   };
 
-  const displayedElapsed = timerStartedAt ? elapsed : 0;
+  const localFacilitationTimer: RealtimeFacilitationTimerState | null =
+    timerStartedAt && currentSlide.id === "team-formation"
+      ? {
+          slideId: "team-formation",
+          durationMs: 15 * 60 * 1000,
+          startedAt: timerStartedAt,
+          status: "running",
+          updatedAt: timerStartedAt,
+        }
+      : null;
+  const activeFacilitationTimer =
+    liveState?.facilitationTimer && liveState.facilitationTimer.status !== "idle"
+      ? liveState.facilitationTimer
+      : localFacilitationTimer;
+  const displayedElapsed = activeFacilitationTimer?.startedAt ? elapsed : 0;
+
+  const startFacilitationTimer = () => {
+    if (liveConnected && presenterSecret) {
+      sendLiveMessage({
+        type: "timer_start",
+        slideId: "team-formation",
+        durationMs: 15 * 60 * 1000,
+        presenterSecret,
+      });
+      return;
+    }
+
+    setTimerStartedAt(Date.now());
+  };
+
+  const resetFacilitationTimer = () => {
+    if (liveConnected && presenterSecret) {
+      sendLiveMessage({
+        type: "timer_reset",
+        presenterSecret,
+      });
+      return;
+    }
+
+    setTimerStartedAt(null);
+  };
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     const target = event.target as HTMLElement | null;
@@ -659,19 +704,13 @@ export function PresentationApp({
                 presentationMode ? "min-h-[calc(100vh-3rem)]" : ""
               }`}
             >
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute left-0 top-0 z-10 h-full w-full origin-left bg-black/6"
-                style={{ clipPath: "polygon(0 0, 14% 0, 10% 100%, 0 100%)" }}
-              />
               <div className="relative z-20 h-full min-h-[inherit] px-6 py-6 md:px-10 md:py-8 xl:px-14 xl:py-10">
                 <SlideRenderer
                   slide={currentSlide}
                   index={currentIndex}
                   total={currentSlides.length}
                   quizState={quizProgress[currentSlide.id]}
+                  facilitationTimer={activeFacilitationTimer}
                   liveQuestion={currentLiveQuestion}
                   participantCount={audienceParticipantCount}
                   votedParticipantNames={votedParticipantNames}
@@ -734,10 +773,14 @@ export function PresentationApp({
               </span>
               <button
                 type="button"
-                onClick={() => setTimerStartedAt((current) => (current ? null : Date.now()))}
+                onClick={() =>
+                  activeFacilitationTimer ? resetFacilitationTimer() : startFacilitationTimer()
+                }
                 className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
-                {timerStartedAt ? `Timer ${formatElapsed(displayedElapsed)}` : "Start timer"}
+                {activeFacilitationTimer
+                  ? `Idea timer ${formatElapsed(displayedElapsed)}`
+                  : "Start idea timer"}
               </button>
             </div>
           </div>

@@ -16,6 +16,14 @@ export type RealtimeQuestionState = {
   updatedAt: number;
 };
 
+export type RealtimeFacilitationTimerState = {
+  slideId: string | null;
+  durationMs: number;
+  startedAt: number | null;
+  status: "idle" | "running" | "completed";
+  updatedAt: number;
+};
+
 export type RealtimeSessionState = {
   sessionCode: string;
   presenterSecret: string;
@@ -23,6 +31,7 @@ export type RealtimeSessionState = {
   activeQuestionSlideId: string | null;
   participants: RealtimeParticipant[];
   questions: Record<string, RealtimeQuestionState>;
+  facilitationTimer: RealtimeFacilitationTimerState;
   updatedAt: number;
 };
 
@@ -65,6 +74,18 @@ export type QuestionResetMessage = {
   presenterSecret: string;
 };
 
+export type TimerStartMessage = {
+  type: "timer_start";
+  slideId: string;
+  durationMs: number;
+  presenterSecret: string;
+};
+
+export type TimerResetMessage = {
+  type: "timer_reset";
+  presenterSecret: string;
+};
+
 export type PingMessage = {
   type: "ping";
 };
@@ -76,6 +97,8 @@ export type ClientMessage =
   | VoteSubmitMessage
   | QuestionRevealMessage
   | QuestionResetMessage
+  | TimerStartMessage
+  | TimerResetMessage
   | PingMessage;
 
 export type SessionStateMessage = {
@@ -166,4 +189,14 @@ export function isClientMessage(value: unknown): value is ClientMessage {
       "type" in value &&
       typeof (value as { type?: unknown }).type === "string",
   );
+}
+
+export function createIdleFacilitationTimerState(): RealtimeFacilitationTimerState {
+  return {
+    slideId: null,
+    durationMs: 0,
+    startedAt: null,
+    status: "idle",
+    updatedAt: Date.now(),
+  };
 }

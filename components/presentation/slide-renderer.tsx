@@ -11,6 +11,7 @@ type SlideRendererProps = {
   index: number;
   total: number;
   quizState: QuizProgress[string] | undefined;
+  facilitationTimer?: import("@/lib/realtime/protocol").RealtimeFacilitationTimerState | null;
   liveQuestion?: import("@/lib/realtime/protocol").RealtimeQuestionState | null;
   participantCount?: number;
   votedParticipantNames?: string[];
@@ -66,12 +67,15 @@ function TeamFormationTicker({
   prompts,
   timerLabel,
   timerMinutes,
+  facilitationTimer,
 }: {
   prompts: string[];
   timerLabel?: string;
   timerMinutes?: number;
+  facilitationTimer?: import("@/lib/realtime/protocol").RealtimeFacilitationTimerState | null;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (prompts.length <= 1) {
@@ -85,7 +89,34 @@ function TeamFormationTicker({
     return () => window.clearInterval(interval);
   }, [prompts]);
 
+  useEffect(() => {
+    if (facilitationTimer?.status !== "running" || !facilitationTimer.startedAt) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [facilitationTimer?.startedAt, facilitationTimer?.status]);
+
   const activePrompt = prompts[activeIndex] ?? prompts[0] ?? "";
+  const defaultDurationMs = (timerMinutes ?? 15) * 60 * 1000;
+  const timerRunning =
+    facilitationTimer?.status === "running" && Boolean(facilitationTimer.startedAt);
+  const remainingMs = timerRunning
+    ? Math.max(
+        0,
+        facilitationTimer!.durationMs - (now - (facilitationTimer!.startedAt ?? now)),
+      )
+    : defaultDurationMs;
+  const remainingMinutes = Math.floor(remainingMs / 60000);
+  const remainingSeconds = Math.floor((remainingMs % 60000) / 1000);
+  const timerComplete = timerRunning && remainingMs === 0;
+  const timerDisplay = `${String(remainingMinutes).padStart(2, "0")}:${String(
+    remainingSeconds,
+  ).padStart(2, "0")}`;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
@@ -127,16 +158,25 @@ function TeamFormationTicker({
             {timerLabel ?? "Timebox"}
           </p>
           <p className="mt-4 font-display text-[5rem] uppercase leading-[0.9] tracking-[-0.06em] md:text-[6rem]">
-            {String(timerMinutes ?? 15).padStart(2, "0")}:00
+            {timerDisplay}
           </p>
           <p className="mt-4 text-lg leading-snug text-black/78">
-            Shortlist your ideas, then come back ready to compare and commit.
+            {timerComplete
+              ? "Time. Bring people back, compare overlap, and lock the idea."
+              : timerRunning
+                ? "Idea sprint is live. Shortlist your ideas, then come back ready to compare and commit."
+                : "Shortlist your ideas, then come back ready to compare and commit."}
           </p>
         </div>
         <div className="mt-6 rounded-[1.5rem] border-2 border-black/85 bg-white/35 px-4 py-4">
           <p className="text-sm uppercase tracking-[0.22em] text-black/56">Facilitator cue</p>
           <p className="mt-2 text-xl leading-tight text-black/84">
-            Aim for one clear problem, one useful workflow, and one demoable outcome.
+            {timerComplete
+              ? "Regroup now. Spot duplicates, choose one idea, and start building."
+              : "Aim for one clear problem, one useful workflow, and one demoable outcome."}
+          </p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-black/58">
+            {timerComplete ? "Timer complete" : timerRunning ? "Timer running" : "Ready to start"}
           </p>
         </div>
       </div>
@@ -149,6 +189,7 @@ export function SlideRenderer({
   index,
   total,
   quizState,
+  facilitationTimer,
   liveQuestion,
   participantCount = 0,
   votedParticipantNames = [],
@@ -224,27 +265,21 @@ export function SlideRenderer({
                 {slide.supportingLine}
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center">
               <StepBadge
                 value={String(index + 1).padStart(2, "0")}
                 className="bg-[#d6ff35] text-black"
               />
-              <div className="h-3 flex-1 rounded-full bg-[#d6ff35]/18">
-                <div className="h-full w-2/3 rounded-full bg-[#d6ff35]" />
-              </div>
             </div>
           </motion.div>
         </div>
 
-        <motion.div variants={itemVariants} className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <motion.div variants={itemVariants} className="max-w-3xl">
           <div className={`${limePanelClass} rounded-[1.6rem] px-6 py-5`}>
             <p className="text-sm uppercase tracking-[0.22em] text-black/56">Big theme</p>
             <p className="mt-3 max-w-3xl text-xl leading-tight md:text-2xl">
               Practical, collaborative AI work over polished theatre.
             </p>
-          </div>
-          <div className="flex justify-end">
-            <div className="h-4 w-40 rounded-full bg-black/90" />
           </div>
         </motion.div>
       </motion.div>
@@ -496,6 +531,7 @@ export function SlideRenderer({
               prompts={slide.prompts}
               timerLabel={slide.timerLabel}
               timerMinutes={slide.timerMinutes}
+              facilitationTimer={facilitationTimer}
             />
           </motion.div>
         </div>

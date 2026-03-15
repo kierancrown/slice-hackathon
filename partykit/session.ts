@@ -1,5 +1,6 @@
 import { allSlides } from "../lib/presentation";
 import {
+  createIdleFacilitationTimerState,
   createEmptyQuestionState,
   isClientMessage,
   recomputeTotals,
@@ -52,6 +53,7 @@ function createInitialState(sessionCode: string, presenterSecret = ""): Realtime
     activeQuestionSlideId: null,
     participants: [],
     questions: {},
+    facilitationTimer: createIdleFacilitationTimerState(),
     updatedAt: Date.now(),
   };
 }
@@ -109,6 +111,12 @@ export default class SessionRoom {
         return;
       case "question_reset":
         this.handleQuestionReset(connection, parsed);
+        return;
+      case "timer_start":
+        this.handleTimerStart(connection, parsed);
+        return;
+      case "timer_reset":
+        this.handleTimerReset(connection, parsed);
         return;
       case "ping":
         this.send(connection, { type: "session_state", state: this.state });
@@ -302,6 +310,38 @@ export default class SessionRoom {
       status: this.state.activeQuestionSlideId === message.slideId ? "open" : "idle",
       updatedAt: Date.now(),
     };
+    this.state.updatedAt = Date.now();
+    this.persistAndBroadcast();
+  }
+
+  handleTimerStart(
+    connection: PartyConnection,
+    message: Extract<ClientMessage, { type: "timer_start" }>,
+  ) {
+    if (!this.assertPresenter(connection, message.presenterSecret)) {
+      return;
+    }
+
+    this.state.facilitationTimer = {
+      slideId: message.slideId,
+      durationMs: Math.max(message.durationMs, 1000),
+      startedAt: Date.now(),
+      status: "running",
+      updatedAt: Date.now(),
+    };
+    this.state.updatedAt = Date.now();
+    this.persistAndBroadcast();
+  }
+
+  handleTimerReset(
+    connection: PartyConnection,
+    message: Extract<ClientMessage, { type: "timer_reset" }>,
+  ) {
+    if (!this.assertPresenter(connection, message.presenterSecret)) {
+      return;
+    }
+
+    this.state.facilitationTimer = createIdleFacilitationTimerState();
     this.state.updatedAt = Date.now();
     this.persistAndBroadcast();
   }
