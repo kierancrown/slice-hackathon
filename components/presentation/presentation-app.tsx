@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useEffectEvent,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -13,8 +14,16 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { LiveSessionPanel } from "@/components/presentation/live-session-panel";
 import { SlideRenderer } from "@/components/presentation/slide-renderer";
-import type { QuizProgress, Slide, SlideTheme } from "@/components/presentation/types";
-import { slides } from "@/data/slides";
+import type { DeckId, QuizProgress, Slide, SlideTheme } from "@/components/presentation/types";
+import {
+  decks,
+  getDeckById,
+  getDefaultDeck,
+  getDeckIdForSlide,
+  getSlideById,
+  quizSlides,
+  resolveDeckAndSlide,
+} from "@/lib/presentation";
 import {
   buildJoinUrl,
   buildRemoteUrl,
@@ -30,6 +39,7 @@ import type {
   ServerMessage,
 } from "@/lib/realtime/protocol";
 
+const CURRENT_DECK_KEY = "slice-ai-current-deck";
 const CURRENT_SLIDE_KEY = "slice-ai-current-slide";
 const QUIZ_PROGRESS_KEY = "slice-ai-quiz-progress";
 const TIMER_KEY = "slice-ai-timer-started-at";
@@ -44,24 +54,8 @@ const themeClasses: Record<SlideTheme, string> = {
   pink: "bg-[#111111] text-[#d6ff35]",
 };
 
-const quizSlides = slides.filter((slide) => slide.kind === "quiz");
-
-function clampIndex(index: number) {
-  return Math.min(Math.max(index, 0), slides.length - 1);
-}
-
-function getIndexFromTarget(target: string | null): number | null {
-  if (!target) {
-    return null;
-  }
-
-  const numeric = Number(target);
-  if (Number.isInteger(numeric) && numeric >= 1 && numeric <= slides.length) {
-    return numeric - 1;
-  }
-
-  const byId = slides.findIndex((slide) => slide.id === target);
-  return byId >= 0 ? byId : null;
+function clampIndex(index: number, total: number) {
+  return Math.min(Math.max(index, 0), Math.max(total - 1, 0));
 }
 
 function getThemeClass(slide: Slide) {
@@ -76,10 +70,15 @@ function formatElapsed(ms: number) {
 }
 
 type PresentationAppProps = {
+  initialDeckTarget: string | null;
   initialSlideTarget: string | null;
 };
 
-export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
+export function PresentationApp({
+  initialDeckTarget,
+  initialSlideTarget,
+}: PresentationAppProps) {
+  const [currentDeckId, setCurrentDeckId] = useState<DeckId>(getDefaultDeck().id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [presentationMode, setPresentationMode] = useState(true);
@@ -102,13 +101,19 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
   const hasBootstrappedRef = useRef(false);
   const liveSocketRef = useRef<WebSocket | null>(null);
   const currentIndexRef = useRef(0);
+  const currentDeckIdRef = useRef<DeckId>(getDefaultDeck().id);
 
-  const currentSlide = slides[currentIndex];
+  const currentDeck = useMemo(
+    () => getDeckById(currentDeckId) ?? getDefaultDeck(),
+    [currentDeckId],
+  );
+  const currentSlides = currentDeck.slides;
+  const currentSlide = currentSlides[currentIndex] ?? currentSlides[0];
   const isDarkSlide = currentSlide.theme === "ink" || currentSlide.theme === "pink";
   const answeredQuizCount = quizSlides.filter((slide) => quizProgress[slide.id]?.revealed).length;
   const score = quizSlides.filter((slide) => {
     const state = quizProgress[slide.id];
-    return state?.revealed && state.selectedId === slide.answerId;
+    return state?.revealed && state.selectedId === slide.correctAnswer;
   }).length;
   const audienceParticipantCount =
     liveState?.participants.filter((participant) => participant.id !== presenterId).length ?? 0;
@@ -129,19 +134,15 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      const fromQuery = getIndexFromTarget(initialSlideTarget);
+      const storedDeck = window.localStorage.getItem(CURRENT_DECK_KEY);
+      const storedSlide = window.localStorage.getItem(CURRENT_SLIDE_KEY);
+      const resolved = resolveDeckAndSlide(
+        initialDeckTarget ?? storedDeck,
+        initialSlideTarget ?? storedSlide,
+      );
 
-      if (fromQuery !== null) {
-        setCurrentIndex(fromQuery);
-      } else {
-        const storedIndex = window.localStorage.getItem(CURRENT_SLIDE_KEY);
-        if (storedIndex) {
-          const parsed = Number(storedIndex);
-          if (Number.isInteger(parsed)) {
-            setCurrentIndex(clampIndex(parsed));
-          }
-        }
-      }
+      setCurrentDeckId(resolved.deck.id);
+      setCurrentIndex(resolved.index);
 
       const storedQuizProgress = window.localStorage.getItem(QUIZ_PROGRESS_KEY);
       if (storedQuizProgress) {
@@ -180,22 +181,29 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [initialSlideTarget]);
+  }, [initialDeckTarget, initialSlideTarget]);
 
   useEffect(() => {
-    if (!hasBootstrappedRef.current) {
+    currentIndexRef.current = currentIndex;
+    currentDeckIdRef.current = currentDeck.id;
+  }, [currentDeck.id, currentIndex]);
+
+  useEffect(() => {
+    if (!hasBootstrappedRef.current || !currentSlide) {
       return;
     }
 
-    window.localStorage.setItem(CURRENT_SLIDE_KEY, String(currentIndex));
+    window.localStorage.setItem(CURRENT_DECK_KEY, currentDeck.id);
+    window.localStorage.setItem(CURRENT_SLIDE_KEY, currentSlide.id);
 
     const params = new URLSearchParams(window.location.search);
+    params.set("deck", currentDeck.id);
     params.set("slide", currentSlide.id);
     const nextUrl = `${window.location.pathname}?${params.toString()}`;
     startTransition(() => {
       window.history.replaceState(null, "", nextUrl);
     });
-  }, [currentIndex, currentSlide.id]);
+  }, [currentDeck.id, currentSlide]);
 
   useEffect(() => {
     if (!hasBootstrappedRef.current) {
@@ -217,10 +225,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
     };
 
     const frame = window.requestAnimationFrame(updateElapsed);
-
-    const interval = window.setInterval(() => {
-      updateElapsed();
-    }, 1000);
+    const interval = window.setInterval(updateElapsed, 1000);
 
     return () => {
       window.cancelAnimationFrame(frame);
@@ -233,24 +238,6 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
       jumpInputRef.current?.focus();
     }
   }, [showJumpPalette]);
-
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  const navigateTo = (targetIndex: number) => {
-    const nextIndex = clampIndex(targetIndex);
-    if (nextIndex === currentIndex) {
-      return;
-    }
-
-    setDirection(nextIndex > currentIndex ? 1 : -1);
-    setCurrentIndex(nextIndex);
-  };
-
-  const stepSlide = (delta: number) => {
-    navigateTo(currentIndex + delta);
-  };
 
   useEffect(() => {
     if (!hasBootstrappedRef.current) {
@@ -275,6 +262,55 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
       window.localStorage.removeItem(LIVE_PRESENTER_SECRET_KEY);
     }
   }, [presenterSecret]);
+
+  const navigateTo = useCallback(
+    (targetIndex: number, targetDeckId?: DeckId) => {
+      const nextDeck = getDeckById(targetDeckId ?? currentDeck.id) ?? currentDeck;
+      const nextIndex = clampIndex(targetIndex, nextDeck.slides.length);
+      const sameDeck = nextDeck.id === currentDeck.id;
+
+      if (sameDeck && nextIndex === currentIndex) {
+        return;
+      }
+
+      setDirection(sameDeck ? (nextIndex > currentIndex ? 1 : -1) : 1);
+      setCurrentDeckId(nextDeck.id);
+      setCurrentIndex(nextIndex);
+    },
+    [currentDeck, currentIndex],
+  );
+
+  const stepSlide = useCallback(
+    (delta: number) => {
+      navigateTo(currentIndex + delta);
+    },
+    [currentIndex, navigateTo],
+  );
+
+  const switchDeck = (deckId: DeckId) => {
+    navigateTo(0, deckId);
+  };
+
+  const getIndexFromTarget = useCallback(
+    (target: string | null) => {
+      if (!target) {
+        return null;
+      }
+
+      const numeric = Number(target);
+      if (
+        Number.isInteger(numeric) &&
+        numeric >= 1 &&
+        numeric <= currentDeck.slides.length
+      ) {
+        return numeric - 1;
+      }
+
+      const byId = currentDeck.slides.findIndex((slide) => slide.id === target);
+      return byId >= 0 ? byId : null;
+    },
+    [currentDeck.slides],
+  );
 
   const sendLiveMessage = useCallback((message: ClientMessage) => {
     const socket = liveSocketRef.current;
@@ -317,9 +353,19 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
         if (message.type === "session_state") {
           setLiveState(message.state);
           setLiveError(null);
-          const nextIndex = getIndexFromTarget(message.state.currentSlideId);
-          if (nextIndex !== null && nextIndex !== currentIndexRef.current) {
-            setDirection(nextIndex > currentIndexRef.current ? 1 : -1);
+          const nextDeckId = getDeckIdForSlide(message.state.currentSlideId);
+          const nextSlide = getSlideById(message.state.currentSlideId, nextDeckId);
+          if (!nextDeckId || !nextSlide) {
+            return;
+          }
+
+          const nextDeck = getDeckById(nextDeckId);
+          const nextIndex =
+            nextDeck?.slides.findIndex((slide) => slide.id === nextSlide.id) ?? -1;
+          if (nextDeck && nextIndex >= 0) {
+            const sameDeck = nextDeck.id === currentDeckIdRef.current;
+            setDirection(sameDeck && nextIndex < currentIndexRef.current ? -1 : 1);
+            setCurrentDeckId(nextDeck.id);
             setCurrentIndex(nextIndex);
           }
         } else if (message.type === "error") {
@@ -345,7 +391,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
   }, [liveSessionCode, presenterSecret, presenterId]);
 
   useEffect(() => {
-    if (!liveConnected || !liveSessionCode || !presenterSecret) {
+    if (!liveConnected || !presenterSecret || !currentSlide) {
       return;
     }
 
@@ -354,13 +400,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
       slideId: currentSlide.id,
       presenterSecret,
     });
-  }, [
-    currentSlide.id,
-    liveConnected,
-    liveSessionCode,
-    presenterSecret,
-    sendLiveMessage,
-  ]);
+  }, [currentSlide, liveConnected, presenterSecret, sendLiveMessage]);
 
   const handleQuizSelect = (slideId: string, optionId: string) => {
     setQuizProgress((current) => ({
@@ -482,10 +522,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
     } else if (event.key.toLowerCase() === "h") {
       event.preventDefault();
       setShowHints((current) => !current);
-    } else if (event.key.toLowerCase() === "m") {
-      event.preventDefault();
-      setPresentationMode((current) => !current);
-    } else if (event.key.toLowerCase() === "p") {
+    } else if (event.key.toLowerCase() === "m" || event.key.toLowerCase() === "p") {
       event.preventDefault();
       setPresentationMode((current) => !current);
     } else if (event.key.toLowerCase() === "j" || event.key === "/") {
@@ -515,7 +552,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const progress = ((currentIndex + 1) / slides.length) * 100;
+  const progress = ((currentIndex + 1) / currentSlides.length) * 100;
 
   return (
     <main className={`relative min-h-screen overflow-hidden ${getThemeClass(currentSlide)}`}>
@@ -534,8 +571,8 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
 
       <div className={`${presentationMode ? "px-6 py-6 md:px-8 md:py-8" : "px-6 py-6 md:px-10 md:py-8"}`}>
         {!presentationMode ? (
-          <header className="mb-4 flex items-center justify-between gap-6">
-            <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-current/62">
+          <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-current/62">
               <div className="rounded-full bg-[#d6ff35] px-3 py-2">
                 <Image
                   src="/branding/slice-logo.svg"
@@ -546,9 +583,26 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
                 />
               </div>
               <span className="h-px w-8 bg-current/25" />
+              <span>{currentDeck.title}</span>
+              <span className="h-px w-8 bg-current/25" />
               <span>{currentSlide.id}</span>
             </div>
+
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-current/62">
+              {decks.map((deck) => (
+                <button
+                  key={deck.id}
+                  type="button"
+                  onClick={() => switchDeck(deck.id)}
+                  className={`border px-3 py-2 transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current ${
+                    deck.id === currentDeck.id
+                      ? "border-current bg-black/10"
+                      : "border-current/20 hover:border-current hover:bg-black/5"
+                  }`}
+                >
+                  {deck.title}
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={() => setOverviewMode((current) => !current)}
@@ -573,9 +627,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <button
                 type="button"
                 onClick={() =>
-                  setShowLivePanelMode((current) =>
-                    current === "audience" ? null : "audience",
-                  )
+                  setShowLivePanelMode((current) => (current === "audience" ? null : "audience"))
                 }
                 className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
@@ -584,9 +636,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <button
                 type="button"
                 onClick={() =>
-                  setShowLivePanelMode((current) =>
-                    current === "remote" ? null : "remote",
-                  )
+                  setShowLivePanelMode((current) => (current === "remote" ? null : "remote"))
                 }
                 className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
@@ -597,9 +647,9 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
         ) : null}
 
         <div className="relative">
-          <AnimatePresence initial={false} mode="wait" custom={direction}>
+          <AnimatePresence initial={false} mode="wait" custom={`${currentDeck.id}:${direction}`}>
             <motion.section
-              key={currentSlide.id}
+              key={`${currentDeck.id}:${currentSlide.id}`}
               custom={direction}
               initial={{ x: direction > 0 ? 140 : -140, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -620,7 +670,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
                 <SlideRenderer
                   slide={currentSlide}
                   index={currentIndex}
-                  total={slides.length}
+                  total={currentSlides.length}
                   quizState={quizProgress[currentSlide.id]}
                   liveQuestion={currentLiveQuestion}
                   participantCount={audienceParticipantCount}
@@ -649,7 +699,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
 
             <div className="flex min-w-56 flex-col items-end gap-3">
               <div className="text-right text-xs font-semibold uppercase tracking-[0.24em] text-current/62">
-                Slide {currentIndex + 1} of {slides.length}
+                {currentDeck.title} • Slide {currentIndex + 1} of {currentSlides.length}
               </div>
               <div className="h-2 w-full max-w-56 overflow-hidden border border-current/25 bg-black/8">
                 <motion.div
@@ -671,8 +721,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               <span>Q: live QR</span>
               <span>W: remote QR</span>
               <span>V: reveal answer</span>
-              <span>M: toggle menu</span>
-              <span>P: toggle menu</span>
+              <span>M / P: toggle menu</span>
               <span>H: hide hints</span>
               <span>R: reset quiz</span>
             </div>
@@ -685,9 +734,7 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               </span>
               <button
                 type="button"
-                onClick={() =>
-                  setTimerStartedAt((current) => (current ? null : Date.now()))
-                }
+                onClick={() => setTimerStartedAt((current) => (current ? null : Date.now()))}
                 className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
               >
                 {timerStartedAt ? `Timer ${formatElapsed(displayedElapsed)}` : "Start timer"}
@@ -699,13 +746,13 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
 
       {overviewMode ? (
         <div className="absolute inset-0 z-40 overflow-auto bg-black/92 p-6 text-[#d6ff35] md:p-10">
-          <div className="mb-6 flex items-center justify-between gap-6">
+          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d6ff35]/55">
                 Overview mode
               </p>
               <h2 className="font-display text-5xl uppercase leading-none tracking-[-0.06em] md:text-6xl">
-                All slides at a glance
+                Decks at a glance
               </h2>
             </div>
             <button
@@ -716,31 +763,57 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
               Close
             </button>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {slides.map((slide, index) => (
-              <button
-                key={slide.id}
-                type="button"
-                onClick={() => {
-                  navigateTo(index);
-                  setOverviewMode(false);
-                }}
-                className={`min-h-48 border p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6ff35] ${
-                  index === currentIndex
-                    ? "border-[#d6ff35] bg-white/8"
-                    : "border-[#d6ff35]/20 bg-white/[0.03] hover:border-[#d6ff35]/60 hover:bg-white/[0.06]"
-                }`}
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#d6ff35]/58">
-                  {String(index + 1).padStart(2, "0")}
-                </p>
-                <p className="mt-4 font-display text-4xl uppercase leading-[0.92] tracking-[-0.06em]">
-                  {slide.title}
-                </p>
-                <p className="mt-3 text-sm uppercase tracking-[0.2em] text-[#d6ff35]/55">
-                  {slide.id}
-                </p>
-              </button>
+
+          <div className="space-y-8">
+            {decks.map((deck) => (
+              <section key={deck.id}>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h3 className="font-display text-4xl uppercase leading-none tracking-[-0.05em]">
+                    {deck.title}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchDeck(deck.id);
+                      setOverviewMode(false);
+                    }}
+                    className="border border-[#d6ff35]/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] transition hover:border-[#d6ff35] hover:bg-white/6"
+                  >
+                    Open deck
+                  </button>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {deck.slides.map((slide, index) => {
+                    const active = deck.id === currentDeck.id && index === currentIndex;
+
+                    return (
+                      <button
+                        key={slide.id}
+                        type="button"
+                        onClick={() => {
+                          navigateTo(index, deck.id);
+                          setOverviewMode(false);
+                        }}
+                        className={`min-h-48 border p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d6ff35] ${
+                          active
+                            ? "border-[#d6ff35] bg-white/8"
+                            : "border-[#d6ff35]/20 bg-white/[0.03] hover:border-[#d6ff35]/60 hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#d6ff35]/58">
+                          {String(index + 1).padStart(2, "0")}
+                        </p>
+                        <p className="mt-4 font-display text-4xl uppercase leading-[0.92] tracking-[-0.06em]">
+                          {slide.title}
+                        </p>
+                        <p className="mt-3 text-sm uppercase tracking-[0.2em] text-[#d6ff35]/55">
+                          {slide.id}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
           </div>
         </div>
@@ -751,9 +824,18 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              const nextIndex = getIndexFromTarget(jumpValue.trim());
+              const trimmed = jumpValue.trim();
+              const nextIndex = getIndexFromTarget(trimmed);
               if (nextIndex !== null) {
                 navigateTo(nextIndex);
+                setShowJumpPalette(false);
+                setJumpValue("");
+                return;
+              }
+
+              const resolvedDeck = getDeckById(trimmed);
+              if (resolvedDeck) {
+                navigateTo(0, resolvedDeck.id);
                 setShowJumpPalette(false);
                 setJumpValue("");
               }
@@ -761,17 +843,17 @@ export function PresentationApp({ initialSlideTarget }: PresentationAppProps) {
             className="w-full max-w-xl border border-[#d6ff35]/20 bg-[#111111] p-5 text-[#d6ff35]"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#d6ff35]/55">
-              Jump to slide
+              Jump within current deck
             </p>
             <input
               ref={jumpInputRef}
               value={jumpValue}
               onChange={(event) => setJumpValue(event.target.value)}
-              placeholder="Enter slide number or id"
+              placeholder="Enter slide number, slide id, or deck id"
               className="mt-4 w-full border border-[#d6ff35]/18 bg-transparent px-4 py-4 font-display text-4xl uppercase tracking-[-0.05em] focus:border-[#d6ff35] focus:outline-none"
             />
             <div className="mt-4 flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-              <span>Examples: 7 or workflow</span>
+              <span>Examples: 3, quiz-agent, day2-demos</span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"

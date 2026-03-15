@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 import { QuizSlide } from "@/components/presentation/quiz-slide";
@@ -39,8 +40,7 @@ const itemVariants = {
 };
 
 const metaTextClass = "text-xs font-semibold uppercase tracking-[0.28em] text-current/60";
-const headingClass =
-  "font-display uppercase leading-[0.9] tracking-[-0.02em]";
+const headingClass = "font-display uppercase leading-[0.9] tracking-[-0.02em]";
 const darkPanelClass =
   "border-2 border-black/90 bg-[#111111] text-[#d6ff35] shadow-[10px_10px_0_rgba(0,0,0,0.16)]";
 const limePanelClass =
@@ -58,6 +58,88 @@ function StepBadge({
       className={`inline-flex min-h-16 min-w-16 items-center justify-center rounded-[0.8rem] border-2 border-black/85 px-4 font-display text-4xl leading-none tracking-[-0.05em] ${className ?? "bg-black text-[#d6ff35]"}`}
     >
       {value}
+    </div>
+  );
+}
+
+function TeamFormationTicker({
+  prompts,
+  timerLabel,
+  timerMinutes,
+}: {
+  prompts: string[];
+  timerLabel?: string;
+  timerMinutes?: number;
+}) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (prompts.length <= 1) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % prompts.length);
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [prompts]);
+
+  const activePrompt = prompts[activeIndex] ?? prompts[0] ?? "";
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className={`${darkPanelClass} rounded-[2rem] p-6`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/62">
+          Live idea loop
+        </p>
+        <div className="mt-5 min-h-32">
+          <motion.p
+            key={activePrompt}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -18 }}
+            transition={{ duration: 0.35 }}
+            className="font-display text-4xl uppercase leading-[0.92] tracking-[-0.04em] md:text-5xl"
+          >
+            {activePrompt}
+          </motion.p>
+        </div>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {prompts.map((prompt, promptIndex) => (
+            <span
+              key={prompt}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+                promptIndex === activeIndex
+                  ? "border-[#d6ff35] bg-[#d6ff35] text-black"
+                  : "border-[#d6ff35]/20 text-[#d6ff35]/72"
+              }`}
+            >
+              {prompt}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className={`${limePanelClass} flex flex-col justify-between rounded-[2rem] p-6`}>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/56">
+            {timerLabel ?? "Timebox"}
+          </p>
+          <p className="mt-4 font-display text-[5rem] uppercase leading-[0.9] tracking-[-0.06em] md:text-[6rem]">
+            {String(timerMinutes ?? 15).padStart(2, "0")}:00
+          </p>
+          <p className="mt-4 text-lg leading-snug text-black/78">
+            Shortlist your ideas, then come back ready to compare and commit.
+          </p>
+        </div>
+        <div className="mt-6 rounded-[1.5rem] border-2 border-black/85 bg-white/35 px-4 py-4">
+          <p className="text-sm uppercase tracking-[0.22em] text-black/56">Facilitator cue</p>
+          <p className="mt-2 text-xl leading-tight text-black/84">
+            Aim for one clear problem, one useful workflow, and one demoable outcome.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -143,7 +225,10 @@ export function SlideRenderer({
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <StepBadge value={String(index + 1).padStart(2, "0")} className="bg-[#d6ff35] text-black" />
+              <StepBadge
+                value={String(index + 1).padStart(2, "0")}
+                className="bg-[#d6ff35] text-black"
+              />
               <div className="h-3 flex-1 rounded-full bg-[#d6ff35]/18">
                 <div className="h-full w-2/3 rounded-full bg-[#d6ff35]" />
               </div>
@@ -179,7 +264,10 @@ export function SlideRenderer({
             <motion.p variants={itemVariants} className={metaTextClass}>
               {slide.eyebrow}
             </motion.p>
-            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-4xl text-6xl md:text-7xl lg:text-[6.4rem]`}>
+            <motion.h2
+              variants={itemVariants}
+              className={`${headingClass} max-w-4xl text-6xl md:text-7xl lg:text-[6.4rem]`}
+            >
               {slide.title}
             </motion.h2>
             <motion.p variants={itemVariants} className="max-w-3xl text-xl leading-[1.12] md:text-2xl">
@@ -203,16 +291,17 @@ export function SlideRenderer({
           </motion.div>
           {slide.bullets ? (
             <motion.div variants={itemVariants} className="grid gap-4">
-              {slide.bullets.map((bullet, bulletIndex) => {
-                return (
-                  <div key={bullet} className={`${limePanelClass} rounded-[1.7rem] p-5`}>
-                    <div className="flex items-start gap-4">
-                      <StepBadge value={String(bulletIndex + 1).padStart(2, "0")} className="bg-black text-[#d6ff35]" />
-                      <p className="pt-1 text-2xl leading-[1.02] md:text-[2rem]">{bullet}</p>
-                    </div>
+              {slide.bullets.map((bullet, bulletIndex) => (
+                <div key={bullet} className={`${limePanelClass} rounded-[1.7rem] p-5`}>
+                  <div className="flex items-start gap-4">
+                    <StepBadge
+                      value={String(bulletIndex + 1).padStart(2, "0")}
+                      className="bg-black text-[#d6ff35]"
+                    />
+                    <p className="pt-1 text-2xl leading-[1.02] md:text-[2rem]">{bullet}</p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </motion.div>
           ) : (
             <div />
@@ -247,74 +336,28 @@ export function SlideRenderer({
           {slide.intro}
         </motion.p>
         <div className="grid flex-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {slide.items.map((item, itemIndex) => {
-            return (
-              <motion.div key={item.title} variants={itemVariants} className={`${limePanelClass} flex flex-col rounded-[1.8rem] p-6`}>
-                <div className="flex items-start justify-between gap-4">
-                  <p className="max-w-xs font-display text-3xl uppercase leading-[0.9] tracking-[-0.05em] md:text-[2.6rem]">
-                    {item.title}
-                  </p>
-                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-black/56">
-                    {String(itemIndex + 1).padStart(2, "0")}
-                  </p>
-                </div>
-                <p className="mt-4 text-lg leading-snug text-black/82">{item.description}</p>
-              </motion.div>
-            );
-          })}
+          {slide.items.map((item, itemIndex) => (
+            <motion.div
+              key={item}
+              variants={itemVariants}
+              className={`${limePanelClass} flex flex-col rounded-[1.8rem] p-6`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <p className="max-w-xs font-display text-3xl uppercase leading-[0.96] tracking-[-0.05em] md:text-[2.6rem]">
+                  {item}
+                </p>
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-black/56">
+                  {String(itemIndex + 1).padStart(2, "0")}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </div>
         {slide.footer ? (
           <motion.div variants={itemVariants} className={`${darkPanelClass} max-w-4xl rounded-[1.8rem] px-6 py-5`}>
             <p className="text-lg leading-snug md:text-xl">{slide.footer}</p>
           </motion.div>
         ) : null}
-      </motion.div>
-    );
-  }
-
-  if (slide.kind === "workflow") {
-    return (
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex h-full flex-col gap-8"
-      >
-        <div className="flex items-start justify-between gap-6">
-          <div className="space-y-4">
-            <motion.p variants={itemVariants} className={metaTextClass}>
-              {slide.eyebrow}
-            </motion.p>
-            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[5.8rem]`}>
-              {slide.title}
-            </motion.h2>
-          </div>
-          <motion.div variants={itemVariants}>
-            <StepBadge value={String(index + 1).padStart(2, "0")} />
-          </motion.div>
-        </div>
-        <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
-          {slide.intro}
-        </motion.p>
-        <div className="grid flex-1 gap-4 lg:grid-cols-5">
-          {slide.steps.map((step, stepIndex) => (
-            <motion.div key={step.name} variants={itemVariants} className={`${limePanelClass} flex flex-col rounded-[1.8rem] p-5`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-black/55">
-                Step {stepIndex + 1}
-              </p>
-              <p className="mt-3 font-display text-4xl uppercase leading-[0.9] tracking-[-0.05em]">
-                {step.name}
-              </p>
-              <p className="mt-4 text-lg leading-snug text-black/82">{step.description}</p>
-              <div className={`${darkPanelClass} mt-auto rounded-[1.3rem] px-4 py-4`}>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/65">
-                  AI helps with
-                </p>
-                <p className="mt-2 text-base leading-snug">{step.aiHelpsWith}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
       </motion.div>
     );
   }
@@ -343,23 +386,24 @@ export function SlideRenderer({
         <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
           {slide.intro}
         </motion.p>
-        <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {slide.items.map((item) => {
-            return (
-              <motion.div key={item.functionName} variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] p-5`}>
-                <p className="font-display text-3xl uppercase leading-[0.9] tracking-[-0.05em] md:text-4xl">
-                  {item.functionName}
-                </p>
-                <div className="mt-4 space-y-3">
-                  {item.examples.map((example) => (
-                    <p key={example} className="border-t-2 border-black/15 pt-3 text-lg leading-snug text-black/80">
-                      {example}
-                    </p>
-                  ))}
-                </div>
-              </motion.div>
-            );
-          })}
+        <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {slide.functions.map((item) => (
+            <motion.div key={item.team} variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] p-5`}>
+              <p className="font-display text-3xl uppercase leading-[0.9] tracking-[-0.05em] md:text-4xl">
+                {item.team}
+              </p>
+              <div className="mt-4 space-y-3">
+                {item.examples.map((example) => (
+                  <p
+                    key={example}
+                    className="border-t-2 border-black/15 pt-3 text-lg leading-snug text-black/80"
+                  >
+                    {example}
+                  </p>
+                ))}
+              </div>
+            </motion.div>
+          ))}
         </div>
       </motion.div>
     );
@@ -389,28 +433,28 @@ export function SlideRenderer({
         <motion.p variants={itemVariants} className="max-w-4xl text-xl leading-[1.08] md:text-2xl">
           {slide.intro}
         </motion.p>
-        <div className="grid flex-1 gap-6 lg:grid-cols-2">
-          {slide.days.map((day) => {
-            const panelClass = day.theme === "ink" ? darkPanelClass : limePanelClass;
-
-            return (
-              <motion.div key={day.label} variants={itemVariants} className={`${panelClass} flex flex-col justify-between gap-6 rounded-[2rem] p-6`}>
-                <p className="font-display text-5xl uppercase leading-none tracking-[-0.06em] md:text-6xl">
-                  {day.label}
-                </p>
-                <div className="space-y-4">
-                  {day.items.map((item, itemIndex) => (
-                    <div key={item} className="border-t-2 border-current/20 pt-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.24em] opacity-70">
-                        {String(itemIndex + 1).padStart(2, "0")}
-                      </p>
-                      <p className="mt-2 text-2xl leading-tight">{item}</p>
-                    </div>
-                  ))}
+        <div className="grid flex-1 gap-4 lg:grid-cols-[0.7fr_1.3fr]">
+          <motion.div variants={itemVariants} className={`${darkPanelClass} rounded-[2rem] p-6`}>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/62">
+              Build rhythm
+            </p>
+            <p className="mt-4 font-display text-5xl uppercase leading-[0.9] tracking-[-0.06em] md:text-6xl">
+              From kickoff to demo
+            </p>
+          </motion.div>
+          <div className="grid gap-4">
+            {slide.phases.map((phase, phaseIndex) => (
+              <motion.div key={phase} variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] p-5`}>
+                <div className="flex items-start gap-4">
+                  <StepBadge
+                    value={String(phaseIndex + 1).padStart(2, "0")}
+                    className="bg-black text-[#d6ff35]"
+                  />
+                  <p className="pt-1 text-2xl leading-[1.04] md:text-[2rem]">{phase}</p>
                 </div>
               </motion.div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </motion.div>
     );
@@ -422,37 +466,111 @@ export function SlideRenderer({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid h-full gap-8 lg:grid-cols-[1fr_1fr]"
+        className="flex h-full flex-col gap-8"
       >
-        <div className="flex flex-col justify-between gap-8">
-          <div className="space-y-4">
-            <motion.p variants={itemVariants} className={metaTextClass}>
-              {slide.eyebrow}
-            </motion.p>
-            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-4xl text-6xl md:text-7xl lg:text-[5.9rem]`}>
-              {slide.title}
-            </motion.h2>
-          </div>
-          <motion.p variants={itemVariants} className="max-w-2xl text-xl leading-[1.08] md:text-2xl">
-            {slide.intro}
-          </motion.p>
-          <motion.div variants={itemVariants}>
-            <div className={`${darkPanelClass} inline-flex items-center gap-3 rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.24em]`}>
-              <span>Idea spark</span>
-              <span>
-                {index + 1}/{total}
-              </span>
+        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="flex flex-col justify-between gap-8">
+            <div className="space-y-4">
+              <motion.p variants={itemVariants} className={metaTextClass}>
+                {slide.eyebrow}
+              </motion.p>
+              <motion.h2 variants={itemVariants} className={`${headingClass} max-w-4xl text-6xl md:text-7xl lg:text-[5.9rem]`}>
+                {slide.title}
+              </motion.h2>
             </div>
+            <motion.p variants={itemVariants} className="max-w-2xl text-xl leading-[1.08] md:text-2xl">
+              {slide.intro}
+            </motion.p>
+            <motion.div variants={itemVariants}>
+              <div className={`${darkPanelClass} inline-flex items-center gap-3 rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.24em]`}>
+                <span>Idea sprint</span>
+                <span>
+                  {index + 1}/{total}
+                </span>
+              </div>
+            </motion.div>
+          </div>
+
+          <motion.div variants={itemVariants}>
+            <TeamFormationTicker
+              prompts={slide.prompts}
+              timerLabel={slide.timerLabel}
+              timerMinutes={slide.timerMinutes}
+            />
           </motion.div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {slide.prompts.map((prompt) => {
-            return (
-              <motion.div key={prompt} variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] p-5`}>
-                <p className="text-xl leading-snug md:text-2xl">{prompt}</p>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {slide.prompts.map((prompt) => (
+            <motion.div key={prompt} variants={itemVariants} className={`${limePanelClass} rounded-[1.5rem] px-4 py-4`}>
+              <p className="text-lg leading-snug md:text-xl">{prompt}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {slide.footer ? (
+          <motion.div variants={itemVariants} className={`${darkPanelClass} max-w-5xl rounded-[1.8rem] px-6 py-5`}>
+            <p className="text-lg leading-snug md:text-xl">{slide.footer}</p>
+          </motion.div>
+        ) : null}
+      </motion.div>
+    );
+  }
+
+  if (slide.kind === "vote") {
+    return (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid h-full gap-8 lg:grid-cols-[1fr_0.92fr]"
+      >
+        <div className="flex flex-col gap-8">
+          <div className="space-y-4">
+            <motion.p variants={itemVariants} className={metaTextClass}>
+              {slide.eyebrow ?? "Voting"}
+            </motion.p>
+            <motion.h2 variants={itemVariants} className={`${headingClass} max-w-5xl text-6xl md:text-7xl lg:text-[6rem]`}>
+              {slide.title}
+            </motion.h2>
+            <motion.p variants={itemVariants} className="max-w-3xl text-xl leading-[1.1] md:text-2xl">
+              {slide.intro}
+            </motion.p>
+          </div>
+
+          <div className="grid gap-4">
+            {slide.items.map((item, itemIndex) => (
+              <motion.div key={item} variants={itemVariants} className={`${limePanelClass} rounded-[1.7rem] p-5`}>
+                <div className="flex items-start gap-4">
+                  <StepBadge
+                    value={String(itemIndex + 1).padStart(2, "0")}
+                    className="bg-black text-[#d6ff35]"
+                  />
+                  <p className="pt-1 text-2xl leading-[1.02] md:text-[2rem]">{item}</p>
+                </div>
               </motion.div>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-between gap-6">
+          <motion.div variants={itemVariants} className={`${darkPanelClass} rounded-[2rem] p-6`}>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/62">
+              Voting mode
+            </p>
+            <p className="mt-4 font-display text-4xl uppercase leading-[0.92] tracking-[-0.05em] md:text-5xl">
+              {slide.voting.status === "coming-soon" ? "Coming soon" : slide.voting.status}
+            </p>
+            <p className="mt-4 text-lg leading-snug text-[#d6ff35]/82">{slide.voting.prompt}</p>
+          </motion.div>
+          {slide.footer ? (
+            <motion.div variants={itemVariants} className={`${limePanelClass} rounded-[1.8rem] px-6 py-5`}>
+              <p className="text-lg leading-snug md:text-xl">{slide.footer}</p>
+            </motion.div>
+          ) : null}
+          <motion.div variants={itemVariants} className="flex justify-end">
+            <StepBadge value={String(index + 1).padStart(2, "0")} />
+          </motion.div>
         </div>
       </motion.div>
     );
@@ -475,13 +593,11 @@ export function SlideRenderer({
       </div>
       <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
         <motion.div variants={itemVariants} className="space-y-4">
-          {slide.lines.map((line) => {
-            return (
-              <div key={line} className={`${limePanelClass} rounded-[1.7rem] px-5 py-5`}>
-                <p className="text-2xl leading-tight md:text-4xl">{line}</p>
-              </div>
-            );
-          })}
+          {slide.lines.map((line) => (
+            <div key={line} className={`${limePanelClass} rounded-[1.7rem] px-5 py-5`}>
+              <p className="text-2xl leading-tight md:text-4xl">{line}</p>
+            </div>
+          ))}
         </motion.div>
         <motion.div variants={itemVariants} className={`${darkPanelClass} justify-self-end rounded-[2rem] px-6 py-6 lg:max-w-xl`}>
           <p className="text-sm uppercase tracking-[0.22em] text-[#d6ff35]/62">Final push</p>

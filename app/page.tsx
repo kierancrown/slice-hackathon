@@ -2,6 +2,7 @@ import { PresentationApp } from "@/components/presentation/presentation-app";
 
 type HomeProps = {
   searchParams?: Promise<{
+    deck?: string;
     slide?: string;
   }>;
 };
@@ -9,5 +10,10 @@ type HomeProps = {
 export default async function Home({ searchParams }: HomeProps) {
   const resolvedSearchParams = await searchParams;
 
-  return <PresentationApp initialSlideTarget={resolvedSearchParams?.slide ?? null} />;
+  return (
+    <PresentationApp
+      initialDeckTarget={resolvedSearchParams?.deck ?? null}
+      initialSlideTarget={resolvedSearchParams?.slide ?? null}
+    />
+  );
 }

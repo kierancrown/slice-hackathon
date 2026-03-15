@@ -1,5 +1,7 @@
 export type SlideTheme = "lime" | "ink" | "blue" | "pink";
 
+export type DeckId = "day1-kickoff" | "day2-demos";
+
 export type BaseSlide = {
   id: string;
   title: string;
@@ -26,28 +28,15 @@ export type StatementSlide = BaseSlide & {
 export type ListSlide = BaseSlide & {
   kind: "list";
   intro: string;
-  items: Array<{
-    title: string;
-    description: string;
-  }>;
+  items: string[];
   footer?: string;
-};
-
-export type WorkflowSlide = BaseSlide & {
-  kind: "workflow";
-  intro: string;
-  steps: Array<{
-    name: string;
-    description: string;
-    aiHelpsWith: string;
-  }>;
 };
 
 export type FunctionGridSlide = BaseSlide & {
   kind: "function-grid";
   intro: string;
-  items: Array<{
-    functionName: string;
+  functions: Array<{
+    team: string;
     examples: string[];
   }>;
 };
@@ -55,17 +44,16 @@ export type FunctionGridSlide = BaseSlide & {
 export type TimelineSlide = BaseSlide & {
   kind: "timeline";
   intro: string;
-  days: Array<{
-    label: string;
-    theme: "ink" | "blue" | "pink";
-    items: string[];
-  }>;
+  phases: string[];
 };
 
 export type PromptSlide = BaseSlide & {
   kind: "prompts";
   intro: string;
   prompts: string[];
+  footer?: string;
+  timerLabel?: string;
+  timerMinutes?: number;
 };
 
 export type ClosingSlide = BaseSlide & {
@@ -77,28 +65,55 @@ export type ClosingSlide = BaseSlide & {
 export type QuizOption = {
   id: string;
   label: string;
-  text: string;
 };
 
 export type QuizSlide = BaseSlide & {
   kind: "quiz";
   format: "multiple-choice" | "plain-english" | "real-or-fake";
   prompt: string;
-  options: QuizOption[];
-  answerId: string;
+  answers: QuizOption[];
+  correctAnswer: string;
+  correctConcept: string;
   explanation: string;
+};
+
+export type VotingSlide = BaseSlide & {
+  kind: "vote";
+  intro: string;
+  items: string[];
+  footer?: string;
+  voting: {
+    status: "coming-soon";
+    prompt: string;
+  };
 };
 
 export type Slide =
   | HeroSlide
   | StatementSlide
   | ListSlide
-  | WorkflowSlide
   | FunctionGridSlide
   | TimelineSlide
   | PromptSlide
   | ClosingSlide
-  | QuizSlide;
+  | QuizSlide
+  | VotingSlide;
+
+export type Deck = {
+  id: DeckId;
+  title: string;
+  slides: Slide[];
+};
+
+export type SlideDeckData = {
+  deckVersion: number;
+  decks: Deck[];
+};
+
+export type SlideRef = {
+  deckId: DeckId;
+  slideId: string;
+};
 
 export type QuizProgress = Record<
   string,

@@ -1,609 +1,265 @@
-import type { Slide } from "@/components/presentation/types";
+import type { SlideDeckData } from "@/components/presentation/types";
 
-export const slides: Slide[] = [
-  {
-    id: "opening",
-    kind: "hero",
-    theme: "lime",
-    eyebrow: "Slice Mobile / Internal Hackathon",
-    title: "Slice AI Hackathon",
-    subtitle: "Learn fast. Build boldly. Demo something real.",
-    supportingLine:
-      "Two days to explore how AI can help every team move faster.",
-    meta: "2-day internal hackathon",
-    speakerNotes:
-      "Open with energy. Set the tone: this is practical, collaborative, and a chance to test ideas quickly rather than chase perfection.",
-  },
-  {
-    id: "why",
-    kind: "statement",
-    theme: "ink",
-    eyebrow: "Why we are doing this",
-    title: "This is about learning how to work with AI well.",
-    body: "Shipping something cool matters. Learning how AI changes thinking, planning, and execution matters more. We want people across Slice to leave with stronger instincts, sharper language, and a clearer sense of where AI is actually useful.",
-    bullets: [
-      "AI is useful across technical and non-technical work.",
-      "The goal is better collaboration, not blind automation.",
-      "Real workflows matter more than impressive jargon.",
-    ],
-    callout: "Good teams will learn a repeatable way of working, not just a one-off trick.",
-    sideLabel: "Learning > theatre",
-    speakerNotes:
-      "Stress that the event is for everyone. Make it safe for non-engineers to participate without pretending to code.",
-  },
-  {
-    id: "success",
-    kind: "list",
-    theme: "lime",
-    eyebrow: "What success looks like",
-    title: "More than code. More than polish.",
-    intro:
-      "The strongest projects will show clear thinking, smart tool use, and a demo that teaches us something useful.",
-    items: [
-      {
-        title: "Clear problem definition",
-        description: "A specific pain point, opportunity, or question worth solving.",
-      },
-      {
-        title: "Useful prototype or workflow",
-        description: "Something tangible that moves an idea into a testable form.",
-      },
-      {
-        title: "Critical thinking",
-        description: "Teams should challenge AI output, not just accept it.",
-      },
-      {
-        title: "Mixed-team collaboration",
-        description: "Strong projects connect domain knowledge with practical implementation.",
-      },
-      {
-        title: "Sharp demo",
-        description: "Explain what you built, why it matters, and what you learned.",
-      },
-    ],
-    footer: "If the demo is clear and the learning is real, you are on the right track.",
-  },
-  {
-    id: "challenge",
-    kind: "list",
-    theme: "blue",
-    eyebrow: "The challenge",
-    title: "Find a real idea. Scope it hard. Build enough to show it.",
-    intro:
-      "Every team should identify one worthwhile idea, use AI to move faster, and end with a five-minute demo that makes the value obvious.",
-    items: [
-      {
-        title: "Start with a pain point or experiment",
-        description: "Choose something practical, playful, or surprising, as long as the idea is clear.",
-      },
-      {
-        title: "Use AI to accelerate the path",
-        description: "Let AI help with research, planning, code, copy, and iteration.",
-      },
-      {
-        title: "Use internal data if it helps",
-        description: "Useful, but not mandatory. A strong mock workflow is still valid.",
-      },
-      {
-        title: "Keep scope tight",
-        description: "Aim for a focused prototype that can be understood in minutes.",
-      },
-    ],
-    footer: "The right question is not 'can we build everything?' It is 'what can we prove quickly?'",
-  },
-  {
-    id: "internal-data",
-    kind: "statement",
-    theme: "pink",
-    eyebrow: "Internal data encouraged",
-    title: "Useful plus memorable usually wins.",
-    body: "Using our own data, workflows, reporting pain, support pain, or internal tools is strongly encouraged because it gives the work real texture. But it is not a hard requirement. Fun, weird, exploratory ideas are absolutely welcome if they still have a point behind them.",
-    bullets: [
-      "Internal workflows give projects grounding.",
-      "Experimental ideas can still reveal valuable patterns.",
-      "The sweet spot is useful, memorable, and well explained.",
-    ],
-    callout: "Do not force internal data into a weak idea. Use it when it makes the concept stronger.",
-    sideLabel: "Useful + memorable",
-  },
-  {
-    id: "teams",
-    kind: "list",
-    theme: "lime",
-    eyebrow: "How teams should work",
-    title: "Mixed teams. Shared ownership. Constant translation.",
-    intro:
-      "The best teams will treat AI work as a live conversation between domain experts, builders, and reviewers.",
-    items: [
-      {
-        title: "Non-technical teammates define the problem",
-        description: "Bring users, workflow pain, edge cases, and business context into the room.",
-      },
-      {
-        title: "Technical teammates scope the build",
-        description: "Turn the idea into a realistic implementation path with clear tradeoffs.",
-      },
-      {
-        title: "Everyone prompts, reviews, and tests",
-        description: "AI is a team tool, not just an engineer tool.",
-      },
-      {
-        title: "Narrate the jargon",
-        description: "Technical people should explain concepts as they work so the whole team levels up.",
-      },
-    ],
-    footer: "If one person disappears into a laptop for two days, the team is leaving value on the table.",
-  },
-  {
-    id: "workflow",
-    kind: "workflow",
-    theme: "ink",
-    eyebrow: "A practical AI workflow",
-    title: "Brief. Spec. Build. Critique. Demo.",
-    intro:
-      "This is a simple loop worth reusing after the hackathon. It keeps teams clear, fast, and honest.",
-    steps: [
-      {
-        name: "Brief",
-        description: "Clarify the problem, the user, and what good looks like.",
-        aiHelpsWith: "Turn vague ideas into a sharper problem statement and useful questions.",
-      },
-      {
-        name: "Spec",
-        description: "Convert the idea into tasks, flows, constraints, and success criteria.",
-        aiHelpsWith: "Draft requirements, edge cases, acceptance criteria, and build plans.",
-      },
-      {
-        name: "Build",
-        description: "Create the prototype, content, logic, and supporting assets.",
-        aiHelpsWith: "Generate code, copy, structure, stubs, and alternative implementation paths.",
-      },
-      {
-        name: "Critique",
-        description: "Pressure-test assumptions, find gaps, and tighten the solution.",
-        aiHelpsWith: "Act as a reviewer, QA partner, or skeptical stakeholder.",
-      },
-      {
-        name: "Demo",
-        description: "Tell the story of the problem, the workflow, and the outcome.",
-        aiHelpsWith: "Shape a concise narrative, slide copy, and talking points.",
-      },
-    ],
-    speakerNotes:
-      "This is the most reusable teaching slide. Slow down slightly and give one concrete example of each stage.",
-  },
-  {
-    id: "where-ai-helps",
-    kind: "function-grid",
-    theme: "lime",
-    eyebrow: "Where AI helps most",
-    title: "Not one team. Not one job.",
-    intro:
-      "AI is especially good at accelerating first drafts, pattern finding, structure, and repetitive thinking across many functions.",
-    items: [
-      {
-        functionName: "Engineering",
-        examples: ["Scaffold internal tools", "Generate tests", "Write migration plans"],
-      },
-      {
-        functionName: "Product",
-        examples: ["Shape briefs", "Map user flows", "Pressure-test requirements"],
-      },
-      {
-        functionName: "Customer Support",
-        examples: ["Draft macros", "Summarize ticket themes", "Suggest workflow fixes"],
-      },
-      {
-        functionName: "Marketing",
-        examples: ["Generate campaign drafts", "Create briefing structure", "Test message angles"],
-      },
-      {
-        functionName: "Operations",
-        examples: ["Map process gaps", "Summarize recurring issues", "Design handoff checklists"],
-      },
-      {
-        functionName: "Finance and Reporting",
-        examples: ["Explain metrics", "Draft reporting commentary", "Spot anomalies to inspect"],
-      },
-      {
-        functionName: "People and Internal Docs",
-        examples: ["Improve onboarding", "Rewrite policy drafts", "Create knowledge summaries"],
-      },
-    ],
-  },
-  {
-    id: "human-judgment",
-    kind: "list",
-    theme: "blue",
-    eyebrow: "Where humans still matter",
-    title: "Judgment is not optional.",
-    intro:
-      "This event is about using AI well, not outsourcing thinking. Human review is where the real quality bar lives.",
-    items: [
-      {
-        title: "Judgment and prioritization",
-        description: "Decide what matters, what does not, and where the real risk is.",
-      },
-      {
-        title: "Taste and communication",
-        description: "Make the output clear, appropriate, and worth showing to others.",
-      },
-      {
-        title: "Context",
-        description: "Bring in business nuance, internal constraints, and real-world knowledge.",
-      },
-      {
-        title: "Ethics and sensitivity",
-        description: "Handle ambiguous, private, or consequential decisions carefully.",
-      },
-      {
-        title: "Validation",
-        description: "Check whether the answer is correct, useful, and safe enough to trust.",
-      },
-    ],
-    footer: "If AI gives you a fast answer, your job is still to decide whether it deserves to survive.",
-  },
-  {
-    id: "tooling",
-    kind: "list",
-    theme: "ink",
-    eyebrow: "Tooling",
-    title: "Use the right AI tool for the job.",
-    intro:
-      "Antigravity matters here, especially for building and implementation, but it should sit inside a wider toolset rather than becoming the whole story.",
-    items: [
-      {
-        title: "Antigravity",
-        description: "Great for building, implementation flow, and turning scoped ideas into working prototypes.",
-      },
-      {
-        title: "Chat and reasoning models",
-        description: "Useful for idea shaping, spec writing, critique, and tightening messy thoughts.",
-      },
-      {
-        title: "AI across the stack",
-        description: "Use it for code, copy, testing, structure, documentation, and presentation polish.",
-      },
-      {
-        title: "Mix tools deliberately",
-        description: "Different models and interfaces are better at different jobs. That is normal.",
-      },
-    ],
-    footer: "Practical teams switch tools when the workflow demands it.",
-  },
-  {
-    id: "jargon-intro",
-    kind: "statement",
-    theme: "pink",
-    eyebrow: "Quiz time",
-    title: "AI Terms, Minus the Nonsense",
-    body: "A quick jargon-busting round before the build starts. The point is not to sound technical. The point is to leave knowing what these words actually mean in plain English.",
-    bullets: [
-      "One focused question per slide.",
-      "Pick an answer, then reveal.",
-      "Keep score if you want. No shame if you miss a few.",
-    ],
-    callout: "If a term cannot be explained simply, it is probably being used badly.",
-    sideLabel: "Jargon busting",
-  },
-  {
-    id: "quiz-prompt",
-    kind: "quiz",
-    theme: "lime",
-    eyebrow: "Jargon busting 1/5",
-    title: "What is a prompt?",
-    format: "plain-english",
-    prompt: "Pick the best plain-English definition.",
-    options: [
-      {
-        id: "a",
-        label: "A",
-        text: "A set of instructions or context you give an AI system so it knows what to do.",
-      },
-      {
-        id: "b",
-        label: "B",
-        text: "A model update that permanently changes how the AI behaves for everyone.",
-      },
-      {
-        id: "c",
-        label: "C",
-        text: "A dashboard for monitoring token spend across a company.",
-      },
-    ],
-    answerId: "a",
-    explanation:
-      "A prompt is just the input: instructions, examples, context, constraints, or questions. Better prompts usually produce better output.",
-  },
-  {
-    id: "quiz-hallucination",
-    kind: "quiz",
-    theme: "blue",
-    eyebrow: "Jargon busting 2/5",
-    title: "Hallucination means...",
-    format: "multiple-choice",
-    prompt: "Choose the most accurate answer.",
-    options: [
-      {
-        id: "a",
-        label: "A",
-        text: "The AI takes too long to respond because it is searching large databases.",
-      },
-      {
-        id: "b",
-        label: "B",
-        text: "The AI confidently produces something false, made up, or unsupported.",
-      },
-      {
-        id: "c",
-        label: "C",
-        text: "The AI refuses to answer because the prompt is too short.",
-      },
-    ],
-    answerId: "b",
-    explanation:
-      "Hallucination is not just a weird answer. It is a wrong or fabricated answer presented as if it were reliable.",
-  },
-  {
-    id: "quiz-agent",
-    kind: "quiz",
-    theme: "pink",
-    eyebrow: "Jargon busting 3/5",
-    title: "Real term or fake: context window",
-    format: "real-or-fake",
-    prompt: "What does this term actually refer to?",
-    options: [
-      {
-        id: "a",
-        label: "A",
-        text: "A real term for how much text or information the model can consider at one time.",
-      },
-      {
-        id: "b",
-        label: "B",
-        text: "A fake marketing phrase for AI-powered browser tabs.",
-      },
-      {
-        id: "c",
-        label: "C",
-        text: "A real term for a special UI that only agents can access.",
-      },
-    ],
-    answerId: "a",
-    explanation:
-      "The context window is the amount of information a model can work with in one go. If important detail falls outside it, quality can drop.",
-  },
-  {
-    id: "quiz-rag",
-    kind: "quiz",
-    theme: "ink",
-    eyebrow: "Jargon busting 4/5",
-    title: "RAG is best explained as...",
-    format: "plain-english",
-    prompt: "Pick the answer you would use with a non-technical teammate.",
-    options: [
-      {
-        id: "a",
-        label: "A",
-        text: "A way of letting AI pull in relevant documents or facts before answering, so responses are more grounded.",
-      },
-      {
-        id: "b",
-        label: "B",
-        text: "A method for compressing large language models into smaller edge devices.",
-      },
-      {
-        id: "c",
-        label: "C",
-        text: "A ranking system that scores how creative an answer feels.",
-      },
-    ],
-    answerId: "a",
-    explanation:
-      "RAG stands for retrieval-augmented generation. In practice, it means the model looks up relevant material first instead of relying only on memory.",
-  },
-  {
-    id: "quiz-evals",
-    kind: "quiz",
-    theme: "lime",
-    eyebrow: "Jargon busting 5/5",
-    title: "What are evals?",
-    format: "multiple-choice",
-    prompt: "Choose the best practical definition.",
-    options: [
-      {
-        id: "a",
-        label: "A",
-        text: "A structured way to test whether an AI system performs well on the tasks you care about.",
-      },
-      {
-        id: "b",
-        label: "B",
-        text: "A legal review process required before any AI tool can ship.",
-      },
-      {
-        id: "c",
-        label: "C",
-        text: "An internal leaderboard that compares different prompt writers.",
-      },
-    ],
-    answerId: "a",
-    explanation:
-      "Evals are how you measure quality. They turn 'this feels good' into repeatable checks against real tasks or expected outputs.",
-  },
-  {
-    id: "rules",
-    kind: "list",
-    theme: "blue",
-    eyebrow: "Rules of the hackathon",
-    title: "Move fast. Stay sharp.",
-    intro:
-      "These rules are here to protect quality, clarity, and good habits while the pace is high.",
-    items: [
-      {
-        title: "Keep scope tight",
-        description: "A focused prototype beats a sprawling unfinished concept.",
-      },
-      {
-        title: "Define success before building",
-        description: "Know what you are proving before AI helps you produce a lot of output.",
-      },
-      {
-        title: "Use AI to accelerate, not to hide weak thinking",
-        description: "Fast output is not the same thing as a strong idea.",
-      },
-      {
-        title: "Review outputs critically",
-        description: "Check facts, logic, usefulness, and clarity before anything goes into a demo.",
-      },
-      {
-        title: "Respect privacy and data boundaries",
-        description: "Be careful with sensitive information and internal constraints.",
-      },
-      {
-        title: "Show something tangible",
-        description: "Every final demo should make the work concrete.",
-      },
-    ],
-  },
-  {
-    id: "judging",
-    kind: "list",
-    theme: "lime",
-    eyebrow: "Judging criteria",
-    title: "What the room should notice.",
-    intro:
-      "Judging is not about perfection. It is about whether the team picked a worthwhile problem and used AI intelligently.",
-    items: [
-      {
-        title: "Clarity of problem",
-        description: "Is the challenge obvious and well framed?",
-      },
-      {
-        title: "Creativity",
-        description: "Did the team find an interesting angle or fresh approach?",
-      },
-      {
-        title: "Usefulness",
-        description: "Would this help someone, save time, or reveal something valuable?",
-      },
-      {
-        title: "Quality of execution",
-        description: "Does the prototype feel coherent, intentional, and demo-ready?",
-      },
-      {
-        title: "Smart use of AI",
-        description: "Was AI used deliberately and effectively, not just visibly?",
-      },
-      {
-        title: "Collaboration and storytelling",
-        description: "Did the team explain the journey clearly and show shared ownership?",
-      },
-      {
-        title: "Learning value",
-        description: "Did the work teach us something reusable?",
-      },
-    ],
-  },
-  {
-    id: "agenda",
-    kind: "timeline",
-    theme: "ink",
-    eyebrow: "Agenda",
-    title: "Two days. One clear arc.",
-    intro:
-      "Keep the rhythm simple: align early, build with purpose, then tighten the story before demos.",
-    days: [
-      {
-        label: "Day 1",
-        theme: "blue",
-        items: [
-          "Kickoff and challenge framing",
-          "Team formation and idea shaping",
-          "Scoping the first version",
-          "Early build and workflow setup",
-          "Checkpoint and direction reset",
-        ],
-      },
-      {
-        label: "Day 2",
-        theme: "pink",
-        items: [
-          "Continue build with tighter focus",
-          "Testing, critique, and iteration",
-          "Demo prep and narrative polishing",
-          "Final presentations",
-          "Wrap-up and shared learning",
-        ],
-      },
-    ],
-  },
-  {
-    id: "idea-prompts",
-    kind: "prompts",
-    theme: "pink",
-    eyebrow: "Project idea prompts",
-    title: "Useful, weird, or both.",
-    intro:
-      "Use these as sparks, not boxes. Good teams adapt them to real Slice context or twist them into something memorable.",
-    prompts: [
-      "A support workflow assistant that drafts replies or surfaces repeat issues.",
-      "An internal reporting helper that turns raw numbers into plain-English summaries.",
-      "A campaign briefing generator for faster creative kickoffs.",
-      "A product QA helper that turns requirements into test cases and edge cases.",
-      "An onboarding or HR helper that reduces repetitive internal questions.",
-      "A knowledge lookup tool that grounds answers in trusted internal docs.",
-      "Something delightfully odd that still teaches us a useful lesson.",
-    ],
-  },
-  {
-    id: "demo-expectations",
-    kind: "list",
-    theme: "lime",
-    eyebrow: "Demo expectations",
-    title: "Five minutes. Make it count.",
-    intro:
-      "The strongest demos are simple, concrete, and honest about what AI did well versus what humans still had to decide.",
-    items: [
-      {
-        title: "What problem did you pick?",
-        description: "Explain the need clearly and quickly.",
-      },
-      {
-        title: "Why does it matter?",
-        description: "Make the value legible to people outside your function.",
-      },
-      {
-        title: "How did AI help?",
-        description: "Show where it accelerated the process or improved the workflow.",
-      },
-      {
-        title: "What did humans still need to do?",
-        description: "Call out the judgment, review, and decisions the team owned.",
-      },
-      {
-        title: "What did you build?",
-        description: "Show the prototype, flow, or working artifact.",
-      },
-      {
-        title: "What would you do next?",
-        description: "End with the next sensible step, not a giant wish list.",
-      },
-    ],
-  },
-  {
-    id: "closing",
-    kind: "closing",
-    theme: "ink",
-    eyebrow: "Go build",
-    title: "Make it useful, weird, or both.",
-    lines: [
-      "Learn the tools.",
-      "Question the output.",
-      "Build something worth showing.",
-    ],
-    kicker: "Two days. Real collaboration. One demo that teaches the room something new.",
-    speakerNotes:
-      "Finish briskly. Send people into team formation with energy and a simple quality bar.",
-  },
-];
+export const slideDecks: SlideDeckData = {
+  deckVersion: 2,
+  decks: [
+    {
+      id: "day1-kickoff",
+      title: "Day 1 Kickoff",
+      slides: [
+        {
+          id: "opening",
+          kind: "hero",
+          theme: "lime",
+          eyebrow: "Slice Mobile / Internal Hackathon",
+          title: "Slice AI Hackathon",
+          subtitle: "Learn fast. Build boldly. Demo something real.",
+          supportingLine: "Two days to explore how AI can help every team move faster.",
+          meta: "2-day internal hackathon",
+          speakerNotes:
+            "Open with energy. Emphasize that this is about practical experimentation and better AI literacy across the company, not perfection.",
+        },
+        {
+          id: "purpose",
+          kind: "statement",
+          theme: "ink",
+          title: "This is about improving AI literacy across Slice.",
+          body: "The goal is to help every team get more confident using AI well — not just to ship something flashy.",
+          bullets: [
+            "AI is useful across technical and non-technical work.",
+            "This is about better collaboration, not blind automation.",
+            "Great projects show clear thinking, not just lots of output.",
+          ],
+          callout: "Learning how to work with AI matters more than a perfect prototype.",
+          sideLabel: "Literacy > theatre",
+          speakerNotes: "Use this to make the event feel inclusive and practical.",
+        },
+        {
+          id: "ai-across-teams",
+          kind: "function-grid",
+          theme: "lime",
+          title: "AI can help every team.",
+          intro: "Not just engineering. Not just coding.",
+          functions: [
+            { team: "Engineering", examples: ["scaffolding", "tests", "debugging support"] },
+            { team: "Product", examples: ["briefs", "requirements", "idea critique"] },
+            { team: "Design", examples: ["copy exploration", "flows", "UI critique"] },
+            {
+              team: "Customer Service",
+              examples: ["macros", "ticket summaries", "support workflow ideas"],
+            },
+            {
+              team: "HR / People",
+              examples: ["onboarding docs", "policy drafting", "internal comms"],
+            },
+          ],
+          speakerNotes:
+            "Keep this fast and visual. The point is that everyone in the room has a role.",
+        },
+        {
+          id: "tooling",
+          kind: "list",
+          theme: "blue",
+          title: "Different tools are good at different things.",
+          intro: "Do not assume one model or one tool is best for every job.",
+          items: [
+            "Chat/reasoning tools: ideas, briefs, critique, planning",
+            "Antigravity: implementation and building",
+            "Design/content tools: visuals, copy, presentation polish",
+            "Smart teams switch tools based on the task",
+          ],
+          footer: "Use the right tool for the job, not the same tool for everything.",
+          speakerNotes:
+            "Keep this practical. Mention Antigravity, but not as the only focus.",
+        },
+        {
+          id: "jargon-intro",
+          kind: "statement",
+          theme: "pink",
+          title: "AI Terms, Minus the Nonsense",
+          body: "You do not need to become an expert today. You just need enough shared language to collaborate well.",
+          bullets: ["A few useful terms", "A quick quiz", "Then straight into the challenge"],
+          callout:
+            "If a term cannot be explained simply, it is probably being used badly.",
+          sideLabel: "Jargon busting",
+          speakerNotes: "Set this up as a fun reset, not a test.",
+        },
+        {
+          id: "quiz-prompt",
+          kind: "quiz",
+          theme: "lime",
+          format: "plain-english",
+          title: "What is a prompt?",
+          prompt: "Pick the best plain-English definition.",
+          answers: [
+            {
+              id: "A",
+              label: "The instructions and context you give an AI so it knows what to do",
+            },
+            { id: "B", label: "The final answer the AI gives you" },
+            { id: "C", label: "A database of previous conversations" },
+          ],
+          correctAnswer: "A",
+          correctConcept: "A prompt is the input, instructions, and context you give an AI system.",
+          explanation:
+            "Good prompts usually include the task, relevant context, constraints, and the output you want.",
+        },
+        {
+          id: "quiz-hallucination",
+          kind: "quiz",
+          theme: "blue",
+          format: "multiple-choice",
+          title: "Hallucination means...",
+          prompt: "Choose the most accurate answer.",
+          answers: [
+            { id: "A", label: "The AI is being creative on purpose" },
+            {
+              id: "B",
+              label: "The AI confidently gives something false, made up, or unsupported",
+            },
+            { id: "C", label: "The AI has run out of tokens" },
+          ],
+          correctAnswer: "B",
+          correctConcept:
+            "A hallucination is when the model presents incorrect or invented information as if it were reliable.",
+          explanation:
+            "This matters because AI can sound convincing even when it is wrong.",
+        },
+        {
+          id: "quiz-agent",
+          kind: "quiz",
+          theme: "ink",
+          format: "plain-english",
+          title: "What is an agent?",
+          prompt: "Pick the best practical definition.",
+          answers: [
+            {
+              id: "A",
+              label: "A system that can take actions across steps, not just answer once",
+            },
+            { id: "B", label: "A special type of chatbot avatar" },
+            { id: "C", label: "A model that only writes code" },
+          ],
+          correctAnswer: "A",
+          correctConcept:
+            "An agent can plan, act, and continue through multiple steps toward a goal.",
+          explanation:
+            "That might include reading files, making changes, running checks, or using tools.",
+        },
+        {
+          id: "hackathon-flow",
+          kind: "timeline",
+          theme: "ink",
+          title: "How the hackathon works",
+          intro: "Small teams. One clear idea. Tight scope. Fast learning.",
+          phases: [
+            "Form mixed teams",
+            "Come up with 2–3 ideas",
+            "Regroup and avoid duplicate projects",
+            "Pick one idea and scope it tightly",
+            "Build enough to demo",
+            "Present on Day 2",
+          ],
+          speakerNotes:
+            "This is the practical handoff from teaching into action.",
+        },
+        {
+          id: "team-formation",
+          kind: "prompts",
+          theme: "lime",
+          title: "Form teams and come back with 2–3 ideas.",
+          intro: "Think practical, fun, or both. Internal data is encouraged, but not required.",
+          prompts: [
+            "Support workflow assistant",
+            "Internal reporting explainer",
+            "Campaign brief generator",
+            "QA helper",
+            "Onboarding or HR helper",
+            "Knowledge lookup tool",
+            "Something weird but useful",
+          ],
+          footer:
+            "We will regroup before teams commit so we are not all building the same thing.",
+          timerLabel: "Idea sprint",
+          timerMinutes: 15,
+          speakerNotes:
+            "This slide should support a rotating example loop and ideally a visible timer.",
+        },
+        {
+          id: "regroup",
+          kind: "statement",
+          theme: "pink",
+          title: "Regroup. Deconflict. Lock your idea.",
+          body: "Once teams have a shortlist, we will quickly align so projects are not clashing. Then you pick one and start building.",
+          bullets: [
+            "Bring back your shortlist",
+            "We will spot overlaps",
+            "Then each team commits to one idea",
+          ],
+          callout: "Useful, weird, or both — just make sure it is clear.",
+          sideLabel: "Idea lock",
+        },
+      ],
+    },
+    {
+      id: "day2-demos",
+      title: "Day 2 Demos",
+      slides: [
+        {
+          id: "day2-reset",
+          kind: "statement",
+          theme: "ink",
+          title: "Today is about tightening, testing, and telling the story.",
+          body: "Do not try to finish the universe. Make the demo clear.",
+          bullets: [
+            "Polish the story",
+            "Test the important bits",
+            "Be honest about what works and what does not",
+          ],
+          callout: "Clarity beats complexity.",
+          sideLabel: "Day 2",
+        },
+        {
+          id: "demo-expectations",
+          kind: "list",
+          theme: "lime",
+          title: "Five minutes. Make it count.",
+          intro: "Strong demos are simple, concrete, and honest about what AI did versus what humans decided.",
+          items: [
+            "What did you build?",
+            "What problem does it solve?",
+            "How did AI help?",
+            "What still needed human judgment?",
+            "What would you do next?",
+          ],
+        },
+        {
+          id: "voting",
+          kind: "vote",
+          theme: "blue",
+          title: "How voting works",
+          intro: "Everyone gets a vote, but not for their own team.",
+          items: [
+            "Vote for the strongest overall project",
+            "Consider clarity, usefulness, creativity, and smart AI use",
+            "Do not vote for your own team",
+          ],
+          footer: "Later we can wire this into the app, just like the quiz.",
+          voting: {
+            status: "coming-soon",
+            prompt: "Future upgrade: turn this into a live vote capture and reveal flow.",
+          },
+        },
+        {
+          id: "presentations-begin",
+          kind: "closing",
+          theme: "pink",
+          title: "Let’s see what you built.",
+          eyebrow: "Demo time",
+          lines: ["Show the idea.", "Show the build.", "Show the learning."],
+          kicker: "Then we vote.",
+        },
+      ],
+    },
+  ],
+};

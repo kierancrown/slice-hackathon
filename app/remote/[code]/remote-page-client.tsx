@@ -3,8 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { slides } from "@/data/slides";
-import { getSlideById } from "@/lib/presentation";
+import { getDeckById, getDeckIdForSlide, getSlideById } from "@/lib/presentation";
 import { createPartySocket } from "@/lib/realtime/client";
 import type {
   ClientMessage,
@@ -16,14 +15,6 @@ type RemotePageClientProps = {
   code: string;
   token: string;
 };
-
-function getIndexById(slideId: string | null | undefined) {
-  if (!slideId) {
-    return -1;
-  }
-
-  return slides.findIndex((slide) => slide.id === slideId);
-}
 
 export function RemotePageClient({ code, token }: RemotePageClientProps) {
   const [sessionState, setSessionState] = useState<RealtimeSessionState | null>(null);
@@ -135,8 +126,12 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
     };
   }, []);
 
-  const currentSlide = getSlideById(sessionState?.currentSlideId ?? null);
-  const currentIndex = sessionState ? getIndexById(sessionState.currentSlideId) : -1;
+  const currentDeckId = getDeckIdForSlide(sessionState?.currentSlideId ?? null);
+  const currentDeck = getDeckById(currentDeckId);
+  const currentSlide = getSlideById(sessionState?.currentSlideId ?? null, currentDeckId);
+  const currentIndex = currentSlide
+    ? currentDeck?.slides.findIndex((slide) => slide.id === currentSlide.id) ?? -1
+    : -1;
   const currentQuiz = currentSlide?.kind === "quiz" ? currentSlide : null;
 
   const send = (message: ClientMessage) => {
@@ -153,6 +148,7 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
       return;
     }
 
+    const slides = currentDeck?.slides ?? [];
     const nextIndex = Math.min(Math.max(currentIndex + delta, 0), slides.length - 1);
     const nextSlide = slides[nextIndex];
     if (!nextSlide) {
@@ -214,15 +210,26 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
             Current slide
           </p>
           <p className="mt-3 font-display text-4xl uppercase leading-[0.9] tracking-[-0.02em]">
-            {currentSlide?.title ?? "Waiting"}
+              {currentSlide?.title ?? "Waiting"}
           </p>
           {currentSlide ? (
             <p className="mt-3 text-sm uppercase tracking-[0.18em] text-[#d6ff35]/68">
-              Slide {currentIndex + 1} of {slides.length}
+              {currentDeck?.title ?? "Deck"} • Slide {currentIndex + 1} of {currentDeck?.slides.length ?? 0}
             </p>
           ) : null}
           {error ? <p className="mt-3 text-sm text-[#d6ff35]/78">{error}</p> : null}
         </div>
+
+        {currentSlide?.speakerNotes ? (
+          <div className="mt-6 rounded-[1.4rem] border border-[#d6ff35]/18 bg-[#d6ff35] px-4 py-4 text-black">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
+              Speaker notes
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-black/82">
+              {currentSlide.speakerNotes}
+            </p>
+          </div>
+        ) : null}
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button

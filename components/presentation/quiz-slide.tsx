@@ -52,7 +52,7 @@ export function QuizSlide({
   const participationCardClass = isDark
     ? "border-[#d6ff35]/18 bg-white/6 text-[#d6ff35]"
     : "border-black/18 bg-white/35 text-black";
-  const correctLiveVotes = liveQuestion?.totals[slide.answerId] ?? 0;
+  const correctLiveVotes = liveQuestion?.totals[slide.correctAnswer] ?? 0;
   const correctLivePercent = liveQuestion?.totalVotes
     ? Math.round((correctLiveVotes / liveQuestion.totalVotes) * 100)
     : 0;
@@ -87,7 +87,7 @@ export function QuizSlide({
           </div>
           <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
             <p>{liveQuestion?.totalVotes ?? 0} votes</p>
-            <p>Answer {slide.answerId.toUpperCase()}</p>
+            <p>Answer {slide.correctAnswer.toUpperCase()}</p>
           </div>
         </div>
       </motion.div>
@@ -208,9 +208,9 @@ export function QuizSlide({
 
       <div className="flex h-full flex-col justify-between gap-6">
         <div className="space-y-4">
-          {slide.options.map((option, optionIndex) => {
+          {slide.answers.map((option, optionIndex) => {
             const isSelected = selectedId === option.id;
-            const isCorrect = option.id === slide.answerId;
+            const isCorrect = option.id === slide.correctAnswer;
             const showCorrect = revealed && isCorrect;
             const showIncorrect = revealed && isSelected && !isCorrect;
             const liveVotes = liveQuestion?.totals[option.id] ?? 0;
@@ -235,12 +235,12 @@ export function QuizSlide({
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <span className="mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.8rem] border-2 border-current font-display text-xl leading-none uppercase">
-                    {option.label}
-                  </span>
+                    <span className="mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.8rem] border-2 border-current font-display text-xl leading-none uppercase">
+                      {option.id}
+                    </span>
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex items-start justify-between gap-4">
-                      <p className="text-xl leading-tight md:text-2xl">{option.text}</p>
+                      <p className="text-xl leading-tight md:text-2xl">{option.label}</p>
                       {shouldShowLiveResults ? (
                         <div className="shrink-0 text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-75">
                           <p>{liveVotes}</p>

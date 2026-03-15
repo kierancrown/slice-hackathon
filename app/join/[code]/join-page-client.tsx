@@ -42,22 +42,17 @@ function getSlideOverview(slide: Slide) {
     case "list":
       return {
         intro: slide.intro,
-        detail: slide.items[0]?.title ?? "",
-      };
-    case "workflow":
-      return {
-        intro: slide.intro,
-        detail: slide.steps.map((step) => step.name).join(" / "),
+        detail: slide.items[0] ?? "",
       };
     case "function-grid":
       return {
         intro: slide.intro,
-        detail: slide.items.map((item) => item.functionName).slice(0, 4).join(" / "),
+        detail: slide.functions.map((item) => item.team).slice(0, 4).join(" / "),
       };
     case "timeline":
       return {
         intro: slide.intro,
-        detail: slide.days.map((day) => day.label).join(" / "),
+        detail: slide.phases.slice(0, 3).join(" / "),
       };
     case "prompts":
       return {
@@ -73,6 +68,11 @@ function getSlideOverview(slide: Slide) {
       return {
         intro: slide.prompt,
         detail: "",
+      };
+    case "vote":
+      return {
+        intro: slide.intro,
+        detail: slide.voting.prompt,
       };
     default:
       return {
@@ -147,9 +147,9 @@ function QuestionCard({
       </div>
 
       <div className="space-y-3">
-        {slide.options.map((option) => {
+        {slide.answers.map((option) => {
           const votes = question.totals[option.id] ?? 0;
-          const isCorrect = option.id === slide.answerId;
+          const isCorrect = option.id === slide.correctAnswer;
           const isSelected = selectedId === option.id;
 
           return (
@@ -173,9 +173,9 @@ function QuestionCard({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-display text-xl uppercase leading-none tracking-[-0.04em]">
-                    {option.label}
+                    {option.id}
                   </p>
-                  <p className="mt-2 text-base leading-snug">{option.text}</p>
+                  <p className="mt-2 text-base leading-snug">{option.label}</p>
                 </div>
                 {revealed ? (
                   <p className="text-xs font-semibold uppercase tracking-[0.22em]">
@@ -393,7 +393,7 @@ export function JoinPageClient({ code }: JoinPageClientProps) {
       return;
     }
 
-    const isCorrect = selectedId === currentQuiz.answerId;
+    const isCorrect = selectedId === currentQuiz.correctAnswer;
     if (isCorrect) {
       trigger([
         { duration: 30 },

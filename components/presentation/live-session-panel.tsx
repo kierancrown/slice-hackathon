@@ -33,10 +33,10 @@ function QuizResults({
 }) {
   return (
     <div className="space-y-3">
-      {slide.options.map((option) => {
+      {slide.answers.map((option) => {
         const votes = question.totals[option.id] ?? 0;
         const percent = question.totalVotes ? Math.round((votes / question.totalVotes) * 100) : 0;
-        const isCorrect = option.id === slide.answerId;
+        const isCorrect = option.id === slide.correctAnswer;
 
         return (
           <div
@@ -48,7 +48,7 @@ function QuizResults({
             }`}
           >
             <div className="flex items-start justify-between gap-4">
-              <p className="text-sm leading-snug">{option.text}</p>
+              <p className="text-sm leading-snug">{option.label}</p>
               <div className="text-right text-xs font-semibold uppercase tracking-[0.22em]">
                 <p>{votes} votes</p>
                 <p>{percent}%</p>

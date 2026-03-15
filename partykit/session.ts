@@ -1,4 +1,4 @@
-import { slides } from "../data/slides";
+import { allSlides } from "../lib/presentation";
 import {
   createEmptyQuestionState,
   isClientMessage,
@@ -29,7 +29,7 @@ type ConnectionMeta = {
   role: "presenter" | "audience";
 };
 
-const DEFAULT_SLIDE_ID = slides[0]?.id ?? "opening";
+const DEFAULT_SLIDE_ID = allSlides[0]?.id ?? "opening";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object");
@@ -194,7 +194,7 @@ export default class SessionRoom {
       return;
     }
 
-    const slide = slides.find((item) => item.id === message.slideId);
+    const slide = allSlides.find((item) => item.id === message.slideId);
     if (!slide) {
       this.send(connection, { type: "error", message: "Unknown slide." });
       return;
