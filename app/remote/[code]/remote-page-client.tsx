@@ -17,7 +17,7 @@ type RemotePageClientProps = {
   token: string;
 };
 
-type RemoteScreen = "controls" | "index" | "notes" | "session";
+type RemoteScreen = "controls" | "index" | "session";
 
 function formatRemaining(timer: RealtimeFacilitationTimerState | null, now: number) {
   if (!timer?.startedAt || timer.status !== "running") {
@@ -320,7 +320,6 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
             {([
               ["controls", "Controls"],
               ["index", "Index"],
-              ["notes", "Notes"],
               ["session", "Session"],
             ] as Array<[RemoteScreen, string]>).map(([value, label]) => (
               <button
@@ -416,6 +415,37 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
                   </div>
                 </div>
               ) : null}
+
+              <div className="rounded-[1.4rem] border border-[#d6ff35] bg-[#d6ff35] px-4 py-4 text-black">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
+                  Presenter cue
+                </p>
+                <p className="mt-3 text-lg leading-snug text-black/84">
+                  {currentSlide?.presenterCue ??
+                    "No short cue yet. Add a presenter cue when you want a fast facilitation prompt here."}
+                </p>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                  Full notes
+                </p>
+                <p className="mt-3 text-base leading-relaxed text-[#d6ff35]/84">
+                  {currentSlide?.speakerNotes ??
+                    "No speaker notes on this slide yet. Add notes here if you want the remote to be more useful during facilitation."}
+                </p>
+              </div>
+
+              {currentQuiz ? (
+                <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
+                    Quiz answer
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
+                    Correct answer: {currentQuiz.correctAnswer}. {currentQuiz.correctConcept}
+                  </p>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -469,53 +499,6 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
                   </div>
                 </div>
               ))}
-            </div>
-          ) : null}
-
-          {screen === "notes" ? (
-            <div className="mt-5 space-y-4">
-              <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-                  Current slide
-                </p>
-                <p className="mt-3 font-display text-3xl uppercase leading-[0.92] tracking-[-0.03em]">
-                  {currentSlide?.title ?? "Waiting"}
-                </p>
-                <p className="mt-3 text-sm uppercase tracking-[0.18em] text-[#d6ff35]/68">
-                  {currentSlide?.id ?? "No active slide"}
-                </p>
-              </div>
-
-              <div className="rounded-[1.4rem] border border-[#d6ff35] bg-[#d6ff35] px-4 py-4 text-black">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/55">
-                  Presenter cue
-                </p>
-                <p className="mt-3 text-lg leading-snug text-black/84">
-                  {currentSlide?.presenterCue ??
-                    "No short cue yet. Add a presenter cue when you want a fast facilitation prompt here."}
-                </p>
-              </div>
-
-              <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-                  Full notes
-                </p>
-                <p className="mt-3 text-base leading-relaxed text-[#d6ff35]/84">
-                  {currentSlide?.speakerNotes ??
-                    "No speaker notes on this slide yet. Add notes here if you want the remote to be more useful during facilitation."}
-                </p>
-              </div>
-
-              {currentQuiz ? (
-                <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-                    Quiz answer
-                  </p>
-                  <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
-                    Correct answer: {currentQuiz.correctAnswer}. {currentQuiz.correctConcept}
-                  </p>
-                </div>
-              ) : null}
             </div>
           ) : null}
 

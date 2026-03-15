@@ -1,10 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import QRCode from "qrcode";
 
 import { QuizSlide } from "@/components/presentation/quiz-slide";
 import type { QuizProgress, Slide } from "@/components/presentation/types";
+import { buildJoinUrl } from "@/lib/realtime/client";
 
 type SlideRendererProps = {
   slide: Slide;
@@ -14,11 +17,8 @@ type SlideRendererProps = {
   facilitationTimer?: import("@/lib/realtime/protocol").RealtimeFacilitationTimerState | null;
   liveQuestion?: import("@/lib/realtime/protocol").RealtimeQuestionState | null;
   participantCount?: number;
-  votedParticipantNames?: string[];
   sessionCode?: string | null;
   liveConnected?: boolean;
-  onLiveReveal?: () => void;
-  onLiveReset?: () => void;
   onQuizSelect: (slideId: string, optionId: string) => void;
   onQuizReveal: (slideId: string) => void;
 };
@@ -192,15 +192,49 @@ export function SlideRenderer({
   facilitationTimer,
   liveQuestion,
   participantCount = 0,
-  votedParticipantNames = [],
   sessionCode = null,
   liveConnected = false,
-  onLiveReveal,
-  onLiveReset,
   onQuizSelect,
   onQuizReveal,
 }: SlideRendererProps) {
   const isDark = slide.theme === "ink" || slide.theme === "pink";
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  useEffect(() => {
+    if (slide.id !== "quiz-reset" || !sessionCode) {
+      return;
+    }
+
+    let active = true;
+    const joinUrl = buildJoinUrl(sessionCode);
+
+    if (!joinUrl) {
+      return;
+    }
+
+    QRCode.toDataURL(joinUrl, {
+      margin: 1,
+      color: {
+        dark: isDark ? "#d6ff35" : "#111111",
+        light: isDark ? "#111111" : "#d6ff35",
+      },
+      width: 220,
+    })
+      .then((dataUrl) => {
+        if (active) {
+          setQrDataUrl(dataUrl);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setQrDataUrl("");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isDark, sessionCode, slide.id]);
 
   if (slide.kind === "quiz") {
     return (
@@ -212,12 +246,6 @@ export function SlideRenderer({
         selectedId={quizState?.selectedId ?? null}
         revealed={quizState?.revealed ?? false}
         liveQuestion={liveQuestion ?? null}
-        participantCount={participantCount}
-        votedParticipantNames={votedParticipantNames}
-        sessionCode={sessionCode}
-        liveConnected={liveConnected}
-        onLiveReveal={onLiveReveal}
-        onLiveReset={onLiveReset}
         onSelect={(optionId) => onQuizSelect(slide.id, optionId)}
         onReveal={() => onQuizReveal(slide.id)}
       />
@@ -287,6 +315,8 @@ export function SlideRenderer({
   }
 
   if (slide.kind === "statement") {
+    const showJoinPanel = slide.id === "quiz-reset" && Boolean(sessionCode);
+
     return (
       <motion.div
         variants={containerVariants}
@@ -324,6 +354,47 @@ export function SlideRenderer({
               <span>{index + 1}/{total}</span>
             </div>
           </motion.div>
+          {showJoinPanel ? (
+            <motion.div variants={itemVariants} className={`${limePanelClass} rounded-[1.7rem] p-5`}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/56">
+                    Join the quiz
+                  </p>
+                  <p className="mt-2 text-lg leading-snug text-black/82">
+                    Scan to join as a viewer before we start.
+                  </p>
+                </div>
+                <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-black/60">
+                  <p>{participantCount} joined</p>
+                  <p>{liveConnected ? "Connected" : "Connecting"}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-end justify-between gap-4">
+                {qrDataUrl ? (
+                  <Image
+                    src={qrDataUrl}
+                    alt="QR code to join the live session"
+                    width={132}
+                    height={132}
+                    className="h-28 w-28 rounded-[1rem] border border-black/18 bg-[#d6ff35] md:h-32 md:w-32"
+                  />
+                ) : (
+                  <div className="flex h-28 w-28 items-center justify-center rounded-[1rem] border border-black/18 bg-white/35 text-xs font-semibold uppercase tracking-[0.18em] text-black/55 md:h-32 md:w-32">
+                    QR loading
+                  </div>
+                )}
+                <div className={`${darkPanelClass} max-w-sm rounded-[1.2rem] px-4 py-4`}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/62">
+                    Presenter check
+                  </p>
+                  <p className="mt-2 text-base leading-snug">
+                    Wait until the room is in before revealing the first question.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
           {slide.bullets ? (
             <motion.div variants={itemVariants} className="grid gap-4">
               {slide.bullets.map((bullet, bulletIndex) => (

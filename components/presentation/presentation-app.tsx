@@ -119,18 +119,9 @@ export function PresentationApp({
     return state?.revealed && state.selectedId === slide.correctAnswer;
   }).length;
   const audienceParticipantCount =
-    liveState?.participants.filter((participant) => participant.id !== presenterId).length ?? 0;
+    liveState?.participants.filter((participant) => !participant.id.startsWith("presenter-"))
+      .length ?? 0;
   const currentLiveQuestion = liveState?.questions[currentSlide.id] ?? null;
-  const votedParticipantNames =
-    currentLiveQuestion && liveState
-      ? liveState.participants
-          .filter(
-            (participant) =>
-              participant.id !== presenterId &&
-              Boolean(currentLiveQuestion.votes[participant.id]),
-          )
-          .map((participant) => participant.name)
-      : [];
   const liveJoinUrl = liveSessionCode ? buildJoinUrl(liveSessionCode) : "";
   const remoteJoinUrl =
     liveSessionCode && presenterSecret ? buildRemoteUrl(liveSessionCode, presenterSecret) : "";
@@ -695,6 +686,24 @@ export function PresentationApp({
               >
                 Remote QR
               </button>
+              {liveSessionCode && currentSlide.kind === "quiz" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={revealLiveQuestion}
+                    className="border border-current px-3 py-2 transition hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+                  >
+                    Reveal live
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetLiveQuestion}
+                    className="border border-current/20 px-3 py-2 transition hover:border-current hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
+                  >
+                    Reset live
+                  </button>
+                </>
+              ) : null}
             </div>
           </header>
         ) : null}
@@ -721,51 +730,50 @@ export function PresentationApp({
                 presentationMode ? "h-full" : "min-h-[calc(100vh-5rem)]"
               }`}
             >
-              <div className="relative z-20 h-full px-6 py-6 md:px-10 md:py-8 xl:px-14 xl:py-10">
-                <SlideRenderer
-                  slide={currentSlide}
-                  index={currentIndex}
-                  total={currentSlides.length}
-                  quizState={quizProgress[currentSlide.id]}
-                  facilitationTimer={activeFacilitationTimer}
-                  liveQuestion={currentLiveQuestion}
-                  participantCount={audienceParticipantCount}
-                  votedParticipantNames={votedParticipantNames}
-                  sessionCode={liveSessionCode}
-                  liveConnected={liveConnected}
-                  onLiveReveal={revealLiveQuestion}
-                  onLiveReset={resetLiveQuestion}
-                  onQuizSelect={handleQuizSelect}
-                  onQuizReveal={handleQuizReveal}
-                />
+              <div className="relative z-20 flex h-full flex-col px-6 py-6 md:px-10 md:py-8 xl:px-14 xl:py-10">
+                <div className="min-h-0 flex-1">
+                  <SlideRenderer
+                    slide={currentSlide}
+                    index={currentIndex}
+                    total={currentSlides.length}
+                    quizState={quizProgress[currentSlide.id]}
+                    facilitationTimer={activeFacilitationTimer}
+                    liveQuestion={currentLiveQuestion}
+                    participantCount={audienceParticipantCount}
+                    sessionCode={liveSessionCode}
+                    liveConnected={liveConnected}
+                    onQuizSelect={handleQuizSelect}
+                    onQuizReveal={handleQuizReveal}
+                  />
+                </div>
+
+                <div className="mt-4 flex items-end justify-between gap-6 pt-3">
+                  <div className="flex items-center rounded-full border border-current/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                    <Image
+                      src="/branding/slice-logo.svg"
+                      alt="Slice"
+                      width={84}
+                      height={28}
+                      className={`h-4 w-auto ${isDarkSlide ? "brightness-0 invert" : ""}`}
+                    />
+                  </div>
+
+                  <div className="flex min-w-56 flex-col items-end gap-3">
+                    <div className="text-right text-xs font-semibold uppercase tracking-[0.24em] text-current/62">
+                      {currentDeck.title} • Slide {currentIndex + 1} of {currentSlides.length}
+                    </div>
+                    <div className="h-2 w-full max-w-56 overflow-hidden border border-current/25 bg-black/8">
+                      <motion.div
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.35, ease: "easeOut" }}
+                        className="h-full bg-current"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.section>
           </AnimatePresence>
-
-          <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-30 flex items-end justify-between gap-6">
-            <div className="flex items-center rounded-full border border-current/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
-              <Image
-                src="/branding/slice-logo.svg"
-                alt="Slice"
-                width={84}
-                height={28}
-                className={`h-4 w-auto ${isDarkSlide ? "brightness-0 invert" : ""}`}
-              />
-            </div>
-
-            <div className="flex min-w-56 flex-col items-end gap-3">
-              <div className="text-right text-xs font-semibold uppercase tracking-[0.24em] text-current/62">
-                {currentDeck.title} • Slide {currentIndex + 1} of {currentSlides.length}
-              </div>
-              <div className="h-2 w-full max-w-56 overflow-hidden border border-current/25 bg-black/8">
-                <motion.div
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="h-full bg-current"
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
         {!presentationMode && showHints ? (

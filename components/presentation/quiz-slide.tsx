@@ -13,12 +13,6 @@ type QuizSlideProps = {
   selectedId: string | null;
   revealed: boolean;
   liveQuestion: RealtimeQuestionState | null;
-  participantCount: number;
-  votedParticipantNames: string[];
-  sessionCode: string | null;
-  liveConnected: boolean;
-  onLiveReveal?: () => void;
-  onLiveReset?: () => void;
   onSelect: (optionId: string) => void;
   onReveal: () => void;
 };
@@ -31,12 +25,6 @@ export function QuizSlide({
   selectedId,
   revealed,
   liveQuestion,
-  participantCount,
-  votedParticipantNames,
-  sessionCode,
-  liveConnected,
-  onLiveReveal,
-  onLiveReset,
   onSelect,
   onReveal,
 }: QuizSlideProps) {
@@ -49,14 +37,12 @@ export function QuizSlide({
   const revealDisabledClass = isDark
     ? "disabled:border-[#d6ff35]/20 disabled:bg-[#d6ff35]/10 disabled:text-[#d6ff35]/35"
     : "disabled:border-black/20 disabled:bg-black/20 disabled:text-black/35";
-  const participationCardClass = isDark
-    ? "border-[#d6ff35]/18 bg-white/6 text-[#d6ff35]"
-    : "border-black/18 bg-white/35 text-black";
   const correctLiveVotes = liveQuestion?.totals[slide.correctAnswer] ?? 0;
   const correctLivePercent = liveQuestion?.totalVotes
     ? Math.round((correctLiveVotes / liveQuestion.totalVotes) * 100)
     : 0;
   const revealBannerVisible = liveQuestion?.status === "revealed";
+  const correctOption = slide.answers.find((option) => option.id === slide.correctAnswer);
 
   return (
     <div className="relative grid h-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -64,30 +50,56 @@ export function QuizSlide({
         initial={false}
         animate={{
           opacity: revealBannerVisible ? 1 : 0,
-          y: revealBannerVisible ? 0 : -18,
-          scale: revealBannerVisible ? 1 : 0.96,
+          y: revealBannerVisible ? 0 : 18,
+          scale: revealBannerVisible ? 1 : 0.98,
           pointerEvents: revealBannerVisible ? "auto" : "none",
         }}
         transition={{ type: "spring", stiffness: 220, damping: 20 }}
-        className={`absolute left-1/2 top-0 z-30 w-full max-w-2xl -translate-x-1/2 rounded-[1.8rem] border-2 px-6 py-5 shadow-[12px_12px_0_rgba(0,0,0,0.16)] ${
-          isDark ? "border-[#d6ff35] bg-[#d6ff35] text-black" : "border-black bg-black text-[#d6ff35]"
+        className={`absolute inset-0 z-40 flex items-center justify-center ${
+          isDark ? "bg-black/86 text-[#d6ff35]" : "bg-[#d6ff35]/92 text-black"
         }`}
       >
-        <div className="flex items-start justify-between gap-6">
+        <div
+          className={`mx-auto grid w-full max-w-6xl gap-6 px-8 py-8 md:px-12 lg:grid-cols-[0.95fr_1.05fr] ${
+            isDark
+              ? "text-[#d6ff35]"
+              : "text-black"
+          }`}
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-70">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] opacity-65">
               Reveal stats
             </p>
-            <p className="mt-2 font-display text-4xl uppercase leading-none tracking-[-0.05em] md:text-5xl">
+            <p className="mt-4 font-display text-[4rem] uppercase leading-[0.88] tracking-[-0.06em] md:text-[5.5rem] lg:text-[6.6rem]">
               {correctLivePercent}% got it right
             </p>
-            <p className="mt-3 text-sm uppercase tracking-[0.18em] opacity-75">
+            <p className="mt-4 text-lg uppercase tracking-[0.18em] opacity-75 md:text-xl">
               {correctLiveVotes} of {liveQuestion?.totalVotes ?? 0} voters picked the right answer
             </p>
           </div>
-          <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
-            <p>{liveQuestion?.totalVotes ?? 0} votes</p>
-            <p>Answer {slide.correctAnswer.toUpperCase()}</p>
+
+          <div
+            className={`rounded-[2rem] border-2 px-6 py-6 shadow-[12px_12px_0_rgba(0,0,0,0.16)] ${
+              isDark ? "border-[#d6ff35] bg-[#d6ff35] text-black" : "border-black bg-black text-[#d6ff35]"
+            }`}
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] opacity-65">
+              Correct answer
+            </p>
+            <p className="mt-4 font-display text-2xl uppercase leading-none tracking-[0.02em] md:text-3xl">
+              {slide.correctAnswer}
+            </p>
+            <p className="mt-3 text-2xl leading-tight md:text-3xl">
+              {correctOption?.label}
+            </p>
+            <p className="mt-5 text-sm font-semibold uppercase tracking-[0.22em] opacity-65">
+              Core concept
+            </p>
+            <p className="mt-2 text-lg leading-snug md:text-xl">{slide.correctConcept}</p>
+            <p className="mt-5 text-sm font-semibold uppercase tracking-[0.22em] opacity-65">
+              Why it matters
+            </p>
+            <p className="mt-2 text-base leading-relaxed md:text-lg">{slide.explanation}</p>
           </div>
         </div>
       </motion.div>
@@ -124,86 +136,6 @@ export function QuizSlide({
           </p>
         </div>
 
-        {sessionCode ? (
-          <div className={`rounded-[1.8rem] border px-5 py-5 ${participationCardClass}`}>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-60">
-                  Live participation
-                </p>
-                <p className="mt-2 font-display text-3xl uppercase leading-none tracking-[-0.05em]">
-                  {participantCount} joined
-                </p>
-              </div>
-              <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
-                <p>{liveConnected ? "Connected" : "Connecting"}</p>
-                <p>{sessionCode}</p>
-              </div>
-            </div>
-
-            {liveQuestion ? (
-              <div className="mt-5 space-y-4">
-                <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.2em] opacity-65">
-                  <span>{liveQuestion.totalVotes} votes</span>
-                  <span>{liveQuestion.status}</span>
-                </div>
-                {votedParticipantNames.length ? (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-58">
-                      Voted so far
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {votedParticipantNames.map((name) => (
-                        <span
-                          key={name}
-                          className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
-                            isDark
-                              ? "border-[#d6ff35]/18 bg-black/20 text-[#d6ff35]"
-                              : "border-black/14 bg-white/55 text-black"
-                          }`}
-                        >
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                <p className="text-sm leading-relaxed opacity-78">
-                  Votes update directly in the answer cards on the right. Reveal or reset the live question from here.
-                </p>
-
-                <div className="flex items-center gap-3 pt-1">
-                  <button
-                    type="button"
-                    onClick={onLiveReveal}
-                    className={`rounded-full border-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] ${
-                      isDark
-                        ? "border-[#d6ff35] bg-[#d6ff35] text-black"
-                        : "border-black bg-black text-[#d6ff35]"
-                    }`}
-                  >
-                    Reveal live
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onLiveReset}
-                    className={`rounded-full border-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] ${
-                      isDark
-                        ? "border-[#d6ff35]/20 text-[#d6ff35]"
-                        : "border-black/20 text-black"
-                    }`}
-                  >
-                    Reset live
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm leading-relaxed opacity-78">
-                Start a live session and move onto this slide to capture votes in realtime.
-              </p>
-            )}
-          </div>
-        ) : null}
       </div>
 
       <div className="flex h-full flex-col justify-between gap-6">
