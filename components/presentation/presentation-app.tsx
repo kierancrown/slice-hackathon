@@ -591,6 +591,7 @@ export function PresentationApp({
     return () => window.cancelAnimationFrame(frame);
   }, [
     audienceParticipantCount,
+    autoRevealNow,
     currentInteractiveSlide,
     currentLiveQuestion,
     pendingAutoReveal,
