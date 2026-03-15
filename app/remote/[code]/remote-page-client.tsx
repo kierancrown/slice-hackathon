@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { decks, getDeckById, getDeckIdForSlide, getSlideById } from "@/lib/presentation";
-import { createPartySocket, getAppUrl } from "@/lib/realtime/client";
+import { createPartySocket } from "@/lib/realtime/client";
 import type {
   ClientMessage,
   RealtimeFacilitationTimerState,
@@ -38,7 +38,6 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
   const normalizedCode = useMemo(() => code.toUpperCase(), [code]);
-  const buildLoopUrl = `${getAppUrl()}/build-loop`;
 
   useEffect(() => {
     if (!token) {
@@ -247,6 +246,14 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
     });
   };
 
+  const showBuildLoop = () => {
+    send({
+      type: "display_mode_set",
+      mode: "build-loop",
+      presenterSecret: token,
+    });
+  };
+
   return (
     <main className="min-h-screen bg-[#111111] px-5 py-6 text-[#d6ff35]">
       <div className="mx-auto max-w-md space-y-6">
@@ -357,14 +364,13 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
             >
               Team formation
             </button>
-            <a
-              href={buildLoopUrl}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={showBuildLoop}
               className="rounded-[1.1rem] border border-[#d6ff35] bg-[#d6ff35] px-3 py-4 text-center text-sm font-semibold uppercase tracking-[0.18em] text-black"
             >
-              Open build loop
-            </a>
+              Show build loop
+            </button>
           </div>
 
           <button

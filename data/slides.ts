@@ -73,80 +73,6 @@ export const slideDecks: SlideDeckData = {
             "Keep this practical. Mention Antigravity, but not as the only focus.",
         },
         {
-          id: "jargon-intro",
-          kind: "statement",
-          theme: "pink",
-          title: "AI Terms, Minus the Nonsense",
-          body: "You do not need to become an expert today. You just need enough shared language to collaborate well.",
-          bullets: ["A few useful terms", "A quick quiz", "Then straight into the challenge"],
-          callout:
-            "If a term cannot be explained simply, it is probably being used badly.",
-          sideLabel: "Jargon busting",
-          speakerNotes: "Set this up as a fun reset, not a test.",
-        },
-        {
-          id: "quiz-prompt",
-          kind: "quiz",
-          theme: "lime",
-          format: "plain-english",
-          title: "What is a prompt?",
-          prompt: "Pick the best plain-English definition.",
-          answers: [
-            {
-              id: "A",
-              label: "The instructions and context you give an AI so it knows what to do",
-            },
-            { id: "B", label: "The final answer the AI gives you" },
-            { id: "C", label: "A database of previous conversations" },
-          ],
-          correctAnswer: "A",
-          correctConcept: "A prompt is the input, instructions, and context you give an AI system.",
-          explanation:
-            "Good prompts usually include the task, relevant context, constraints, and the output you want.",
-        },
-        {
-          id: "quiz-hallucination",
-          kind: "quiz",
-          theme: "blue",
-          format: "multiple-choice",
-          title: "Hallucination means...",
-          prompt: "Choose the most accurate answer.",
-          answers: [
-            { id: "A", label: "The AI is being creative on purpose" },
-            {
-              id: "B",
-              label: "The AI confidently gives something false, made up, or unsupported",
-            },
-            { id: "C", label: "The AI has run out of tokens" },
-          ],
-          correctAnswer: "B",
-          correctConcept:
-            "A hallucination is when the model presents incorrect or invented information as if it were reliable.",
-          explanation:
-            "This matters because AI can sound convincing even when it is wrong.",
-        },
-        {
-          id: "quiz-agent",
-          kind: "quiz",
-          theme: "ink",
-          format: "plain-english",
-          title: "What is an agent?",
-          prompt: "Pick the best practical definition.",
-          answers: [
-            {
-              id: "A",
-              label: "A system that can take actions across steps, not just answer once",
-            },
-            { id: "B", label: "A special type of chatbot avatar" },
-            { id: "C", label: "A model that only writes code" },
-          ],
-          correctAnswer: "A",
-          correctConcept:
-            "An agent can plan, act, and continue through multiple steps toward a goal.",
-          explanation:
-            "That might include reading files, making changes, running checks, or using tools.",
-        },
-        {
           id: "hackathon-flow",
           kind: "timeline",
           theme: "ink",
@@ -232,6 +158,121 @@ export const slideDecks: SlideDeckData = {
             "What still needed human judgment?",
             "What would you do next?",
           ],
+        },
+        {
+          id: "quiz-reset",
+          kind: "statement",
+          theme: "pink",
+          title: "Quick reset before demos.",
+          body: "One fast AI quiz, then we vote and start presentations.",
+          bullets: [
+            "A few shared terms",
+            "A couple of AI history and LLM questions",
+            "Then straight into voting and demos",
+          ],
+          callout: "Keep it light. This is a recap, not an exam.",
+          sideLabel: "Quiz round",
+          speakerNotes: "Use this to re-energize the room before demos begin.",
+        },
+        {
+          id: "quiz-prompt",
+          kind: "quiz",
+          theme: "lime",
+          format: "plain-english",
+          title: "What is a prompt?",
+          prompt: "Pick the best plain-English definition.",
+          answers: [
+            {
+              id: "A",
+              label: "The instructions and context you give an AI so it knows what to do",
+            },
+            { id: "B", label: "The final answer the AI gives you" },
+            { id: "C", label: "A database of previous conversations" },
+          ],
+          correctAnswer: "A",
+          correctConcept: "A prompt is the input, instructions, and context you give an AI system.",
+          explanation:
+            "Good prompts usually include the task, relevant context, constraints, and the output you want.",
+        },
+        {
+          id: "quiz-hallucination",
+          kind: "quiz",
+          theme: "blue",
+          format: "multiple-choice",
+          title: "Hallucination means...",
+          prompt: "Choose the most accurate answer.",
+          answers: [
+            { id: "A", label: "The AI is being creative on purpose" },
+            {
+              id: "B",
+              label: "The AI confidently gives something false, made up, or unsupported",
+            },
+            { id: "C", label: "The AI has run out of tokens" },
+          ],
+          correctAnswer: "B",
+          correctConcept:
+            "A hallucination is when the model presents incorrect or invented information as if it were reliable.",
+          explanation:
+            "This matters because AI can sound convincing even when it is wrong.",
+        },
+        {
+          id: "quiz-agent",
+          kind: "quiz",
+          theme: "ink",
+          format: "plain-english",
+          title: "What is an agent?",
+          prompt: "Pick the best practical definition.",
+          answers: [
+            {
+              id: "A",
+              label: "A system that can take actions across steps, not just answer once",
+            },
+            { id: "B", label: "A special type of chatbot avatar" },
+            { id: "C", label: "A model that only writes code" },
+          ],
+          correctAnswer: "A",
+          correctConcept:
+            "An agent can plan, act, and continue through multiple steps toward a goal.",
+          explanation:
+            "That might include reading files, making changes, running checks, or using tools.",
+        },
+        {
+          id: "quiz-chatgpt-release",
+          kind: "quiz",
+          theme: "lime",
+          format: "multiple-choice",
+          title: "When did ChatGPT first release to the public?",
+          prompt: "Pick the correct public launch date.",
+          answers: [
+            { id: "A", label: "November 30, 2022" },
+            { id: "B", label: "March 14, 2023" },
+            { id: "C", label: "January 1, 2021" },
+          ],
+          correctAnswer: "A",
+          correctConcept: "ChatGPT was publicly released on November 30, 2022.",
+          explanation:
+            "That launch is the moment AI tools really entered mainstream daily use for a lot of people.",
+        },
+        {
+          id: "quiz-context-window",
+          kind: "quiz",
+          theme: "blue",
+          format: "plain-english",
+          title: "What is a context window?",
+          prompt: "Choose the most practical explanation.",
+          answers: [
+            {
+              id: "A",
+              label: "How much information the model can consider at one time",
+            },
+            { id: "B", label: "The design of the chat interface around the model" },
+            { id: "C", label: "A browser window used only for AI agents" },
+          ],
+          correctAnswer: "A",
+          correctConcept:
+            "A context window is the amount of text or information a model can work with in one go.",
+          explanation:
+            "If important detail falls outside that window, quality and consistency can drop.",
         },
         {
           id: "voting",

@@ -49,6 +49,7 @@ function createInitialState(sessionCode: string, presenterSecret = ""): Realtime
   return {
     sessionCode: sessionCode.toUpperCase(),
     presenterSecret,
+    displayMode: "slides",
     currentSlideId: DEFAULT_SLIDE_ID,
     activeQuestionSlideId: null,
     participants: [],
@@ -70,6 +71,7 @@ function normalizeSessionState(
     facilitationTimer: state.facilitationTimer ?? initial.facilitationTimer,
     participants: state.participants ?? initial.participants,
     questions: state.questions ?? initial.questions,
+    displayMode: state.displayMode ?? initial.displayMode,
   };
 }
 
@@ -138,6 +140,9 @@ export default class SessionRoom {
         return;
       case "session_reset":
         this.handleSessionReset(connection, parsed);
+        return;
+      case "display_mode_set":
+        this.handleDisplayModeSet(connection, parsed);
         return;
       case "ping":
         this.send(connection, { type: "session_state", state: this.state });
@@ -229,6 +234,7 @@ export default class SessionRoom {
       return;
     }
 
+    this.state.displayMode = "slides";
     this.state.currentSlideId = slide.id;
     this.state.updatedAt = Date.now();
 
@@ -379,6 +385,19 @@ export default class SessionRoom {
       this.room.id.replace(/^session-?/i, ""),
       this.state.presenterSecret,
     );
+    this.persistAndBroadcast();
+  }
+
+  handleDisplayModeSet(
+    connection: PartyConnection,
+    message: Extract<ClientMessage, { type: "display_mode_set" }>,
+  ) {
+    if (!this.assertPresenter(connection, message.presenterSecret)) {
+      return;
+    }
+
+    this.state.displayMode = message.mode;
+    this.state.updatedAt = Date.now();
     this.persistAndBroadcast();
   }
 

@@ -13,6 +13,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 
 import { LiveSessionPanel } from "@/components/presentation/live-session-panel";
+import { BuildLoopView } from "@/components/presentation/build-loop-view";
 import { SlideRenderer } from "@/components/presentation/slide-renderer";
 import type { DeckId, QuizProgress, Slide, SlideTheme } from "@/components/presentation/types";
 import {
@@ -133,6 +134,7 @@ export function PresentationApp({
   const liveJoinUrl = liveSessionCode ? buildJoinUrl(liveSessionCode) : "";
   const remoteJoinUrl =
     liveSessionCode && presenterSecret ? buildRemoteUrl(liveSessionCode, presenterSecret) : "";
+  const isBuildLoopMode = liveState?.displayMode === "build-loop";
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -599,6 +601,10 @@ export function PresentationApp({
 
   const progress = ((currentIndex + 1) / currentSlides.length) * 100;
 
+  if (isBuildLoopMode) {
+    return <BuildLoopView />;
+  }
+
   return (
     <main className={`relative min-h-screen overflow-hidden ${getThemeClass(currentSlide)}`}>
       <button
@@ -614,7 +620,9 @@ export function PresentationApp({
         className="absolute inset-y-0 right-0 z-20 hidden w-24 cursor-e-resize bg-gradient-to-l from-black/12 to-transparent lg:block"
       />
 
-      <div className={`${presentationMode ? "px-6 py-6 md:px-8 md:py-8" : "px-6 py-6 md:px-10 md:py-8"}`}>
+      <div
+        className={`${presentationMode ? "grid min-h-screen place-items-center px-6 py-6 md:px-8 md:py-8" : "px-6 py-6 md:px-10 md:py-8"}`}
+      >
         {!presentationMode ? (
           <header className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-current/62">
@@ -691,7 +699,16 @@ export function PresentationApp({
           </header>
         ) : null}
 
-        <div className="relative">
+        <div
+          className={`relative ${presentationMode ? "aspect-[16/9]" : ""}`}
+          style={
+            presentationMode
+              ? {
+                  width: "min(calc(100vw - 3rem), calc((100vh - 3rem) * 16 / 9))",
+                }
+              : undefined
+          }
+        >
           <AnimatePresence initial={false} mode="wait" custom={`${currentDeck.id}:${direction}`}>
             <motion.section
               key={`${currentDeck.id}:${currentSlide.id}`}
@@ -700,11 +717,11 @@ export function PresentationApp({
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: direction > 0 ? -120 : 120, opacity: 0 }}
               transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-              className={`relative min-h-[calc(100vh-5rem)] overflow-hidden border border-current/18 ${
-                presentationMode ? "min-h-[calc(100vh-3rem)]" : ""
+              className={`relative overflow-hidden border border-current/18 ${
+                presentationMode ? "h-full" : "min-h-[calc(100vh-5rem)]"
               }`}
             >
-              <div className="relative z-20 h-full min-h-[inherit] px-6 py-6 md:px-10 md:py-8 xl:px-14 xl:py-10">
+              <div className="relative z-20 h-full px-6 py-6 md:px-10 md:py-8 xl:px-14 xl:py-10">
                 <SlideRenderer
                   slide={currentSlide}
                   index={currentIndex}

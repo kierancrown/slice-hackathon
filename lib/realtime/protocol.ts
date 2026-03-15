@@ -27,6 +27,7 @@ export type RealtimeFacilitationTimerState = {
 export type RealtimeSessionState = {
   sessionCode: string;
   presenterSecret: string;
+  displayMode: "slides" | "build-loop";
   currentSlideId: string;
   activeQuestionSlideId: string | null;
   participants: RealtimeParticipant[];
@@ -91,6 +92,12 @@ export type SessionResetMessage = {
   presenterSecret: string;
 };
 
+export type DisplayModeSetMessage = {
+  type: "display_mode_set";
+  mode: "slides" | "build-loop";
+  presenterSecret: string;
+};
+
 export type PingMessage = {
   type: "ping";
 };
@@ -105,6 +112,7 @@ export type ClientMessage =
   | TimerStartMessage
   | TimerResetMessage
   | SessionResetMessage
+  | DisplayModeSetMessage
   | PingMessage;
 
 export type SessionStateMessage = {
