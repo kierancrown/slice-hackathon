@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LiveSessionPanel } from "@/components/presentation/live-session-panel";
 import { BuildLoopView } from "@/components/presentation/build-loop-view";
 import { SlideRenderer } from "@/components/presentation/slide-renderer";
+import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import type { DeckId, QuizProgress, Slide, SlideTheme } from "@/components/presentation/types";
 import {
   decks,
@@ -108,10 +109,12 @@ export function PresentationApp({
   const jumpInputRef = useRef<HTMLInputElement>(null);
   const hasBootstrappedRef = useRef(false);
   const liveSocketRef = useRef<WebSocket | null>(null);
+  const confettiRef = useRef<ConfettiRef>(null);
   const currentIndexRef = useRef(0);
   const currentDeckIdRef = useRef<DeckId>(getDefaultDeck().id);
   const autoAdvancedTimerRef = useRef<number | null>(null);
   const autoRevealedQuestionRef = useRef<string | null>(null);
+  const previousVoteRevealKeyRef = useRef("");
 
   const currentDeck = useMemo(
     () => getDeckById(currentDeckId) ?? getDefaultDeck(),
@@ -518,6 +521,7 @@ export function PresentationApp({
     }
 
     if (
+      currentInteractiveSlide.kind !== "quiz" ||
       currentLiveQuestion.status !== "open" ||
       audienceParticipantCount === 0 ||
       currentLiveQuestion.totalVotes < audienceParticipantCount
@@ -597,6 +601,34 @@ export function PresentationApp({
     pendingAutoReveal,
     revealLiveQuestion,
   ]);
+
+  useEffect(() => {
+    if (currentInteractiveSlide?.kind !== "vote" || !currentLiveQuestion) {
+      previousVoteRevealKeyRef.current = "";
+      return;
+    }
+
+    const revealKey = `${currentLiveQuestion.slideId}:${currentLiveQuestion.status}`;
+    if (revealKey === previousVoteRevealKeyRef.current) {
+      return;
+    }
+
+    const wasRevealed = previousVoteRevealKeyRef.current.endsWith(":revealed");
+    previousVoteRevealKeyRef.current = revealKey;
+
+    if (currentLiveQuestion.status !== "revealed" || wasRevealed) {
+      return;
+    }
+
+    confettiRef.current?.fire({
+      particleCount: 220,
+      spread: 100,
+      startVelocity: 48,
+      scalar: 1.1,
+      origin: { x: 0.5, y: 0.45 },
+      colors: ["#d6ff35", "#ffffff", "#111111"],
+    });
+  }, [currentInteractiveSlide, currentLiveQuestion]);
 
   const startFacilitationTimer = () => {
     if (liveConnected && presenterSecret) {
@@ -858,6 +890,11 @@ export function PresentationApp({
                 presentationMode ? "h-full" : "min-h-[calc(100vh-5rem)]"
               }`}
             >
+              <Confetti
+                ref={confettiRef}
+                manualstart
+                className="pointer-events-none absolute inset-0 z-40 h-full w-full"
+              />
               <div className="relative z-20 flex h-full flex-col px-6 py-6 md:px-10 md:py-8 xl:px-14 xl:py-10">
                 <div className="min-h-0 flex-1">
                   <SlideRenderer

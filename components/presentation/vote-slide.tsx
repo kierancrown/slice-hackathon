@@ -180,9 +180,9 @@ export function VoteSlide({
             {revealed
               ? "Winner is on screen."
               : votingOpen
-                ? countdownSecondsRemaining
-                  ? "Everyone is in. Quick pause for final vote changes before reveal."
-                  : "Phones are live. Once everyone has voted, the winning team reveals automatically."
+                ? votedCount >= participantCount && participantCount > 0
+                  ? "Everyone is in. Reveal the winner from the presenter controls when you're ready."
+                  : "Phones are live. Votes stay hidden until the presenter reveals the winner."
                 : slide.voting.prompt}
           </p>
         </div>

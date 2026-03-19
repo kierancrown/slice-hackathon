@@ -167,6 +167,27 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
     ? currentDeck?.slides.findIndex((slide) => slide.id === currentSlide.id) ?? -1
     : -1;
   const currentInteractiveSlide = isInteractiveSlide(currentSlide) ? currentSlide : null;
+  const currentQuestion = currentInteractiveSlide
+    ? sessionState?.questions[currentInteractiveSlide.id] ?? null
+    : null;
+  const voteRevealed =
+    currentInteractiveSlide?.kind === "vote" && currentQuestion?.status === "revealed";
+  const winningVoteOption =
+    currentInteractiveSlide?.kind === "vote" && voteRevealed
+      ? currentInteractiveSlide.voting.options.reduce<(typeof currentInteractiveSlide.voting.options)[number] | null>(
+          (winner, option) => {
+            const winnerVotes = winner ? currentQuestion?.totals[winner.id] ?? 0 : -1;
+            const optionVotes = currentQuestion?.totals[option.id] ?? 0;
+            return optionVotes > winnerVotes ? option : winner;
+          },
+          null,
+        )
+      : null;
+  const winningVoteCount = winningVoteOption ? currentQuestion?.totals[winningVoteOption.id] ?? 0 : 0;
+  const winningVotePercent =
+    voteRevealed && currentQuestion?.totalVotes
+      ? Math.round((winningVoteCount / currentQuestion.totalVotes) * 100)
+      : 0;
   const facilitationTimer = sessionState?.facilitationTimer ?? null;
   const facilitationTimerLabel = formatRemaining(facilitationTimer, now);
   const facilitationTimerActive =
@@ -458,11 +479,27 @@ export function RemotePageClient({ code, token }: RemotePageClientProps) {
               {currentInteractiveSlide?.kind === "vote" ? (
                 <div className="rounded-[1.4rem] border border-[#d6ff35]/18 bg-white/6 px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d6ff35]/55">
-                    Live vote
+                    {voteRevealed ? currentInteractiveSlide.voting.revealLabel : "Live vote"}
                   </p>
-                  <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
-                    {currentInteractiveSlide.voting.prompt}
-                  </p>
+                  {voteRevealed ? (
+                    <>
+                      <p className="mt-3 font-display text-3xl uppercase leading-none tracking-[-0.04em] text-[#d6ff35]">
+                        {winningVoteOption?.label ?? "Awaiting result"}
+                      </p>
+                      {winningVoteOption?.detail ? (
+                        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#d6ff35]/58">
+                          {winningVoteOption.detail}
+                        </p>
+                      ) : null}
+                      <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
+                        {winningVoteCount} votes. {winningVotePercent}% of the room.
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-3 text-sm leading-relaxed text-[#d6ff35]/82">
+                      {currentInteractiveSlide.voting.prompt}
+                    </p>
+                  )}
                 </div>
               ) : null}
             </div>
