@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import QRCode from "qrcode";
 
+import { CelebrationSlide } from "@/components/presentation/celebration-slide";
 import { QuizSlide } from "@/components/presentation/quiz-slide";
 import { VoteSlide } from "@/components/presentation/vote-slide";
 import type { QuizProgress, Slide } from "@/components/presentation/types";
@@ -638,6 +639,10 @@ export function SlideRenderer({
         ) : null}
       </motion.div>
     );
+  }
+
+  if (slide.kind === "closing" && slide.celebration === "confetti") {
+    return <CelebrationSlide slide={slide} index={index} total={total} isDark={isDark} />;
   }
 
   return (

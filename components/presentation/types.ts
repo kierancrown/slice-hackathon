@@ -61,6 +61,8 @@ export type ClosingSlide = BaseSlide & {
   kind: "closing";
   lines: string[];
   kicker: string;
+  body?: string;
+  celebration?: "confetti";
 };
 
 export type QuizOption = {
